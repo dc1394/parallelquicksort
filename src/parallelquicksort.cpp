@@ -13,12 +13,20 @@
 #include <tuple>					// for std::tie
 #include <utility>					// for std::pair
 #include <vector>					// for std::vector
+
+#if __INTEL_COMPILER >= 18
 #include <pstl/algorithm>
 #include <pstl/execution>			// for std::execution::par_unseq
+#endif
+
 #include <boost/assert.hpp>			// for boost::assert
 #include <boost/format.hpp>			// for boost::format
 #include <boost/thread.hpp>			// for boost::thread::physical_concurrency
+
+#if defined(__INTEL_COMPILER) || __GNUC__ >= 5
 #include <cilk/cilk.h>				// for cilk_spawn, cilk_sync
+#endif
+
 #include <tbb/parallel_invoke.h>	// for tbb::parallel_invoke
 #include <tbb/parallel_sort.h>		// for tbb::parallel_sort
 
@@ -153,6 +161,7 @@ namespace {
         }
     }
 
+#if defined(__INTEL_COMPILER) || __GNUC__ >= 5
     template < class RandomIter >
     //! A template function.
     /*!
@@ -211,9 +220,10 @@ namespace {
     */
     inline void quick_sort_cilk(RandomIter first, RandomIter last)
     {
-        // 再帰ありの並列クイックソートを呼び出す
+        // 再帰ありの並列クイックソートの関数を呼び出す
         quick_sort_cilk(first, last, 0);
     }
+#endif
 
     template < class RandomIter >
     //! A template function.
@@ -407,15 +417,21 @@ namespace {
     }
 
 #ifdef _DEBUG
-    void vec_check(std::vector<std::int32_t> const & v1, std::vector<std::int32_t> const & v2);
+    //! A template function.
+    /*!
+        与えられた二つのstd::vectorのすべての要素が同じかどうかチェックする
+        \param v1 一つ目のstd::vector
+        \param v2 二つめのstd::vector
+        \return 与えられた二つのstd::vectorのすべての要素が同じならtrue、そうでないならfalse
+    */
+    bool vec_check(std::vector<std::int32_t> const & v1, std::vector<std::int32_t> const & v2);
 #endif
 }
 
 int main()
 {
-    std::cout<<"Intel Compiler "<<__INTEL_COMPILER/100.0 << std::endl;
-
-    exit(0);
+    std::cout << "物理コア数: " << boost::thread::physical_concurrency();
+    std::cout << ", 論理コア数: " << boost::thread::hardware_concurrency() << std::endl;
 
     std::ofstream ofsrandom("ランダムなデータ.csv");
     std::ofstream ofssort("あらかじめソートされたデータ.csv");
@@ -474,17 +490,33 @@ namespace {
                 elapsed_time([](auto & vec) { quick_sort_thread(vec.begin(), vec.end()); }, ofs, vecar[2]);
                 elapsed_time([](auto & vec) { quick_sort_openmp(vec.begin(), vec.end()); }, ofs, vecar[3]);
                 elapsed_time([](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, ofs, vecar[4]);
+#if defined(__INTEL_COMPILER) || __GNUC__ >= 5
                 elapsed_time([](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, ofs, vecar[5]);
+#endif
                 elapsed_time([](auto & vec) { tbb::parallel_sort(vec); }, ofs, vecar[6]);
 
-#if (__INTEL_COMPILER >= 18)
+#if __INTEL_COMPILER >= 18
                 elapsed_time([](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, ofs, vecar[7]);
 #endif
                 ofs << std::endl;
 
 #ifdef _DEBUG
-                for (auto const & vec : vecar) {
-                    vec_check(vecback, vec);
+                for (auto i = 0U; i < vecar.size(); i++) {
+#if !defined(__INTEL_COMPILER) && __GNUC__ < 5
+                    if (i == 5) {
+                        continue;
+                    }                    
+#endif
+
+#if __INTEL_COMPILER < 18
+                    if (i == 7) {
+                        continue;
+                    }                    
+#endif
+
+                    if (!vec_check(vecback, vecar[i])) {
+                        std::cout << "Error! vecar[" << i << ']' << std::endl;
+                    }
                 }
 #endif
                 if (!j) {
@@ -520,14 +552,16 @@ namespace {
     }
     
 #ifdef _DEBUG
-    void vec_check(std::vector<std::int32_t> const & v1, std::vector<std::int32_t> const & v2)
+    bool vec_check(std::vector<std::int32_t> const & v1, std::vector<std::int32_t> const & v2)
     {
         for (auto i = 0; i < N; i++) {
             if (v1[i] != v2[i]) {
                 std::cerr << "Error! i = " << i << std::endl;
-                return;
+                return false;
             }
         }
+
+        return true;
     }
 #endif
 }
