@@ -287,8 +287,8 @@ namespace {
     */
     inline void quick_sort_openmp(RandomIter first, RandomIter last)
     {
-#pragma omp parallel	// OpenMP並列領域の始まり
-#pragma omp single		// task句はsingle領域で実行
+#pragma omp parallel    // OpenMP並列領域の始まり
+#pragma omp single      // task句はsingle領域で実行
         // 再帰ありの並列クイックソートを呼び出す
         quick_sort_openmp(first, last, 0);
     }
