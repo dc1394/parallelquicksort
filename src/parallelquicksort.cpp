@@ -30,6 +30,8 @@
 #include <tbb/parallel_invoke.h>	// for tbb::parallel_invoke
 #include <tbb/parallel_sort.h>		// for tbb::parallel_sort
 
+#define _DEBUG
+
 namespace {
     //! A enumerated type
     /*!
@@ -225,6 +227,7 @@ namespace {
     }
 #endif
 
+#ifndef _MSC_VER
     template < class RandomIter >
     //! A template function.
     /*!
@@ -292,6 +295,7 @@ namespace {
         // 再帰ありの並列クイックソートを呼び出す
         quick_sort_openmp(first, last, 0);
     }
+#endif
 
     template < class RandomIter >
     //! A template function.
@@ -488,8 +492,12 @@ namespace {
                 elapsed_time([](auto & vec) { std::sort(vec.begin(), vec.end()); }, ofs, vecar[0]);
                 elapsed_time([](auto & vec) { quick_sort(vec.begin(), vec.end()); }, ofs, vecar[1]);
                 elapsed_time([](auto & vec) { quick_sort_thread(vec.begin(), vec.end()); }, ofs, vecar[2]);
+
+#ifndef _MSC_VER
                 elapsed_time([](auto & vec) { quick_sort_openmp(vec.begin(), vec.end()); }, ofs, vecar[3]);
+#endif
                 elapsed_time([](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, ofs, vecar[4]);
+
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
                 elapsed_time([](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, ofs, vecar[5]);
 #endif
@@ -502,6 +510,12 @@ namespace {
 
 #ifdef _DEBUG
                 for (auto i = 0U; i < vecar.size(); i++) {
+#ifdef _MSC_VER
+                    if (i == 3) {
+                        continue;
+                    }
+#endif
+
 #if !defined(__INTEL_COMPILER) && __GNUC__ < 5
                     if (i == 5) {
                         continue;

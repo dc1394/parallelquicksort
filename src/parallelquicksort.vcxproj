@@ -140,13 +140,14 @@
       <PrecompiledHeaderFile />
       <OpenMP>GenerateParallelCode</OpenMP>
       <Cpp0xSupport>true</Cpp0xSupport>
-      <Optimization>MaxSpeedHighLevel</Optimization>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
       <UseProcessorExtensions>AVX2</UseProcessorExtensions>
       <FlushDenormalResultsToZero>true</FlushDenormalResultsToZero>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <Optimization>MaxSpeedHighLevel</Optimization>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
