@@ -227,7 +227,7 @@ namespace {
     }
 #endif
 
-#ifndef _MSC_VER
+#if _OPENMP >= 200805
     template < class RandomIter >
     //! A template function.
     /*!

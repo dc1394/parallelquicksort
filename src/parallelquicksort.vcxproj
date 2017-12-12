@@ -146,8 +146,8 @@
       <UseProcessorExtensions>AVX2</UseProcessorExtensions>
       <FlushDenormalResultsToZero>true</FlushDenormalResultsToZero>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <Optimization>MaxSpeedHighLevel</Optimization>
       <OpenMPSupport>true</OpenMPSupport>
+      <Optimization>MaxSpeedHighLevel</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
