@@ -175,8 +175,8 @@ namespace {
         // 部分ソートの要素数
         auto const num = std::distance(first, last);
 
-        // 部分ソートの要素数が0なら何もすることはない
         if (!num) {
+            // 部分ソートの要素数が0なら何もすることはない
             return;
         }
 
@@ -238,8 +238,8 @@ namespace {
         // 部分ソートの要素数
         auto const num = std::distance(first, last);
 
-        // 部分ソートの要素数が0なら何もすることはない
         if (!num) {
+            // 部分ソートの要素数が0なら何もすることはない
             return;
         }
 
@@ -306,8 +306,8 @@ namespace {
         // 部分ソートの要素数
         auto const num = std::distance(first, last);
 
-        // 部分ソートの要素数が0なら何もすることはない
         if (!num) {
+            // 部分ソートの要素数が0なら何もすることはない
             return;
         }
 
@@ -366,8 +366,8 @@ namespace {
         // 部分ソートの要素数
         auto const num = std::distance(first, last);
 
-        // 部分ソートの要素数が0なら何もすることはない
         if (!num) {
+            // 部分ソートの要素数が0なら何もすることはない
             return;
         }
 
