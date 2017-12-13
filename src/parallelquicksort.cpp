@@ -30,8 +30,6 @@
 #include <tbb/parallel_invoke.h>	// for tbb::parallel_invoke
 #include <tbb/parallel_sort.h>		// for tbb::parallel_sort
 
-#define _DEBUG
-
 namespace {
     //! A enumerated type
     /*!
@@ -493,7 +491,7 @@ namespace {
                 elapsed_time([](auto & vec) { quick_sort(vec.begin(), vec.end()); }, ofs, vecar[1]);
                 elapsed_time([](auto & vec) { quick_sort_thread(vec.begin(), vec.end()); }, ofs, vecar[2]);
 
-#ifndef _MSC_VER
+#if _OPENMP >= 200805
                 elapsed_time([](auto & vec) { quick_sort_openmp(vec.begin(), vec.end()); }, ofs, vecar[3]);
 #endif
                 elapsed_time([](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, ofs, vecar[4]);
@@ -510,7 +508,7 @@ namespace {
 
 #ifdef _DEBUG
                 for (auto i = 0U; i < vecar.size(); i++) {
-#ifdef _MSC_VER
+#if _OPENMP < 200805
                     if (i == 3) {
                         continue;
                     }
