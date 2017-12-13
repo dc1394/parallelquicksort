@@ -30,6 +30,8 @@
 #include <tbb/parallel_invoke.h>	// for tbb::parallel_invoke
 #include <tbb/parallel_sort.h>		// for tbb::parallel_sort
 
+#define DEBUG
+
 namespace {
     //! A enumerated type
     /*!
@@ -175,7 +177,7 @@ namespace {
         // 部分ソートの要素数
         auto const num = std::distance(first, last);
 
-        if (!num) {
+        if (num <= 1) {
             // 部分ソートの要素数が0なら何もすることはない
             return;
         }
@@ -239,7 +241,7 @@ namespace {
         // 部分ソートの要素数
         auto const num = std::distance(first, last);
 
-        if (!num) {
+        if (num <= 1) {
             // 部分ソートの要素数が0なら何もすることはない
             return;
         }
@@ -308,7 +310,7 @@ namespace {
         // 部分ソートの要素数
         auto const num = std::distance(first, last);
 
-        if (!num) {
+        if (num <= 1) {
             // 部分ソートの要素数が0なら何もすることはない
             return;
         }
@@ -368,7 +370,7 @@ namespace {
         // 部分ソートの要素数
         auto const num = std::distance(first, last);
 
-        if (!num) {
+        if (num <= 1) {
             // 部分ソートの要素数が0なら何もすることはない
             return;
         }
@@ -418,7 +420,7 @@ namespace {
         quick_sort_thread(first, last, 0);
     }
 
-#ifdef _DEBUG
+#ifdef DEBUG
     //! A template function.
     /*!
         与えられた二つのstd::vectorのすべての要素が同じかどうかチェックする
@@ -435,12 +437,17 @@ int main()
     std::cout << "物理コア数: " << boost::thread::physical_concurrency();
     std::cout << ", 論理コア数: " << boost::thread::hardware_concurrency() << std::endl;
 
-    std::ofstream ofsrandom("ランダムなデータ.csv");
+    std::ofstream ofsrandom("完全にシャッフルされたデータ.csv");
     std::ofstream ofssort("あらかじめソートされたデータ.csv");
     std::ofstream ofsquartersort("最初の1_4だけソートされたデータ.csv");
     
+    std::cout << "完全にシャッフルされたデータを計測中...\n";
     check_performance(Checktype::RANDOM, ofsrandom);
+
+    std::cout << "\nあらかじめソートされたデータを計測中...\n";
     check_performance(Checktype::SORT, ofssort);
+
+    std::cout << "\n最初の1_4だけソートされたデータを計測中...\n";
     check_performance(Checktype::QUARTERSORT, ofsquartersort);
 
     return 0;
@@ -506,7 +513,7 @@ namespace {
 #endif
                 ofs << std::endl;
 
-#ifdef _DEBUG
+#ifdef DEBUG
                 for (auto i = 0U; i < vecar.size(); i++) {
 #if _OPENMP < 200805
                     if (i == 3) {
@@ -563,7 +570,7 @@ namespace {
         ofs << boost::format("%.10f") % (elapsed_time / static_cast<double>(CHECKLOOP)) << ',';
     }
     
-#ifdef _DEBUG
+#ifdef DEBUG
     bool vec_check(std::vector<std::int32_t> const & v1, std::vector<std::int32_t> const & v2)
     {
         for (auto i = 0; i < N; i++) {
