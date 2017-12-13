@@ -30,8 +30,6 @@
 #include <tbb/parallel_invoke.h>	// for tbb::parallel_invoke
 #include <tbb/parallel_sort.h>		// for tbb::parallel_sort
 
-#define DEBUG
-
 namespace {
     //! A enumerated type
     /*!
@@ -52,7 +50,7 @@ namespace {
     /*!
         計測する回数
     */
-    static auto constexpr CHECKLOOP = 5;
+    static auto constexpr CHECKLOOP = 10;
 
     //! A global variable (constant expression).
     /*!
@@ -83,11 +81,13 @@ namespace {
     //! A function.
     /*!
         引数で与えられたstd::functionの実行時間をファイルに出力する
+        \param checktype パフォーマンスをチェックする際の対象配列の種類
         \param func 実行するstd::function
+        \param n 配列のサイス
         \param ofs 出力用のファイルストリーム
-        \param vec funcに渡すstd::vector
+        \return funcの実行結果のstd::vector
     */
-    void elapsed_time(std::function<void(std::vector<std::int32_t> &)> const & func, std::ofstream & ofs, std::vector<std::int32_t> & vec);
+    std::vector<std::int32_t> elapsed_time(Checktype checktype, std::function<void(std::vector<std::int32_t> &)> const & func, std::int32_t n, std::ofstream & ofs);
 
     template < class RandomIter >
     //! A template function.
@@ -466,50 +466,27 @@ namespace {
                 std::vector<std::int32_t> vec(n);
                 std::iota(vec.begin(), vec.end(), 1);
                 std::vector<std::int32_t> vecback(vec);
-
-                switch (checktype) {
-                    case Checktype::RANDOM:
-                    {
-                        std::random_device rnd;
-                        std::shuffle(vec.begin(), vec.end(), std::mt19937(rnd()));
-                    }
-                    break;
-
-                    case Checktype::SORT:
-                        break;
-
-                    case Checktype::QUARTERSORT:
-                    {
-                        std::random_device rnd;
-                        std::shuffle(vec.begin() + n / 4, vec.end(), std::mt19937(rnd()));
-                    }
-                    break;
-
-                    default:
-                        BOOST_ASSERT(!"switchのdefaultに来てしまった！");
-                        break;
-                }
                 
-                std::array< std::vector<std::int32_t>, 8 > vecar = { vec, vec, vec, vec, vec, vec, vec, vec };
+                std::array< std::vector<std::int32_t>, 8 > vecar;
 
                 ofs << n << ',';
 
-                elapsed_time([](auto & vec) { std::sort(vec.begin(), vec.end()); }, ofs, vecar[0]);
-                elapsed_time([](auto & vec) { quick_sort(vec.begin(), vec.end()); }, ofs, vecar[1]);
-                elapsed_time([](auto & vec) { quick_sort_thread(vec.begin(), vec.end()); }, ofs, vecar[2]);
+                vecar[0] = elapsed_time(checktype, [](auto & vec) { std::sort(vec.begin(), vec.end()); }, n, ofs);
+                vecar[1] = elapsed_time(checktype, [](auto & vec) { quick_sort(vec.begin(), vec.end()); }, n, ofs);
+                vecar[2] = elapsed_time(checktype, [](auto & vec) { quick_sort_thread(vec.begin(), vec.end()); }, n, ofs);
 
 #if _OPENMP >= 200805
-                elapsed_time([](auto & vec) { quick_sort_openmp(vec.begin(), vec.end()); }, ofs, vecar[3]);
+                vecar[3] = elapsed_time(checktype, [](auto & vec) { quick_sort_openmp(vec.begin(), vec.end()); }, n, ofs);
 #endif
-                elapsed_time([](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, ofs, vecar[4]);
+                vecar[4] = elapsed_time(checktype, [](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
-                elapsed_time([](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, ofs, vecar[5]);
+                vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
 #endif
-                elapsed_time([](auto & vec) { tbb::parallel_sort(vec); }, ofs, vecar[6]);
+                vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
 
 #if __INTEL_COMPILER >= 18
-                elapsed_time([](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, ofs, vecar[7]);
+                vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
                 ofs << std::endl;
 
@@ -547,27 +524,48 @@ namespace {
         }
     }
 
-    void elapsed_time(std::function<void(std::vector<std::int32_t> &)> const & func, std::ofstream & ofs, std::vector<std::int32_t> & vec)
+    std::vector<std::int32_t> elapsed_time(Checktype checktype, std::function<void(std::vector<std::int32_t> &)> const & func, std::int32_t n, std::ofstream & ofs)
     {
         using namespace std::chrono;
-
-        auto vback(vec);
+        
+        std::vector<std::int32_t> vec(n);
+        std::iota(vec.begin(), vec.end(), 1);
 
         auto elapsed_time = 0.0;
         for (auto i = 1; i <= CHECKLOOP; i++) {
+            switch (checktype) {
+            case Checktype::RANDOM:
+            {
+                std::random_device rnd;
+                std::shuffle(vec.begin(), vec.end(), std::mt19937(rnd()));
+            }
+            break;
+
+            case Checktype::SORT:
+                break;
+
+            case Checktype::QUARTERSORT:
+            {
+                std::random_device rnd;
+                std::shuffle(vec.begin() + n / 4, vec.end(), std::mt19937(rnd()));
+            }
+            break;
+
+            default:
+                BOOST_ASSERT(!"switchのdefaultに来てしまった！");
+                break;
+            }
+
             auto beg = high_resolution_clock::now();
             func(vec);
             auto end = high_resolution_clock::now();
         
             elapsed_time += (duration_cast<duration<double>>(end - beg)).count();
-
-            if (i != CHECKLOOP) {
-                vec.assign(vback.begin(), vback.end());
-            }
         }
-
-
+        
         ofs << boost::format("%.10f") % (elapsed_time / static_cast<double>(CHECKLOOP)) << ',';
+
+        return vec;
     }
     
 #ifdef DEBUG
