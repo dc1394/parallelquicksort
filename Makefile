@@ -6,7 +6,7 @@ DEPS = parallelquicksort.d
 
 VPATH  = src
 CXX = icpc
-CXXFLAGS = -Wextra -O3 -xCORE-AVX2 -ipo -pipe -std=c++17 -fopenmp
+CXXFLAGS = -Wall -Wextra -O3 -xCORE-AVX2 -ipo -pipe -std=c++17 -fopenmp
 LDFLAGS = -L/home/dc1394/oss/tbb2018_20171205oss/lib/intel64/gcc4.7 -ltbb \
 		  -L/home/dc1394/oss/boost_1_65_1/stage/icc/lib -lboost_system -lboost_thread
 
