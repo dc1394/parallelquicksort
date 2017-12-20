@@ -1,4 +1,11 @@
-﻿#include <algorithm>                // for std::partition, std::shuffle, std::sort
+﻿/*! \file parallelquicksort.cpp
+    \brief スレッド並列化したクイックソートのパフォーマンスをチェックする
+
+    Copyright © 2017 @dc1394 All Rights Reserved.
+    This software is released under the BSD 2-Clause License.
+*/
+
+#include <algorithm>                // for std::partition, std::shuffle, std::sort
 #include <array>                    // for std::array
 #include <chrono>                   // for std::chrono
 #include <cstdint>                  // for std::int32_t
