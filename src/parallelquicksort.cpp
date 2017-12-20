@@ -10,7 +10,7 @@
 #include <chrono>                   // for std::chrono
 #include <cstdint>                  // for std::int32_t
 #include <fstream>                  // for std::ofstream
-#include <iostream>                 // for std::cout
+#include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
 #include <numeric>                  // for std::iota
 #include <random>                   // for std::mt19937, std::random_device
@@ -580,7 +580,7 @@ namespace {
     {
         for (auto i = 0; i < N; i++) {
             if (v1[i] != v2[i]) {
-                std::cerr << "Error! i = " << i << std::endl;
+                std::cerr << "Error! i = " << i << '\n';
                 return false;
             }
         }
