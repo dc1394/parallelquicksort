@@ -472,7 +472,7 @@ namespace {
 
                 std::vector<std::int32_t> vec(n);
                 std::iota(vec.begin(), vec.end(), 1);
-                std::vector<std::int32_t> vecback(vec);
+                auto const vecback(vec);
 
                 std::array< std::vector<std::int32_t>, 8 > vecar;
 
