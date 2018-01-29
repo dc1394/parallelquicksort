@@ -578,7 +578,10 @@ namespace {
 #ifdef DEBUG
     bool vec_check(std::vector<std::int32_t> const & v1, std::vector<std::int32_t> const & v2)
     {
-        for (auto i = 0; i < N; i++) {
+        auto const size = v1.size();
+        BOOST_ASSERT(size == v2.size());
+
+        for (auto i = 0; i < size; i++) {
             if (v1[i] != v2[i]) {
                 std::cerr << "Error! i = " << i << '\n';
                 return false;
