@@ -15,7 +15,6 @@
 #include <numeric>                  // for std::iota
 #include <random>                   // for std::mt19937, std::random_device
 #include <stack>                    // for std::stack
-#include <string>                   // for std::string
 #include <thread>                   // for std::thread
 #include <tuple>                    // for std::tie
 #include <utility>                  // for std::pair
@@ -468,7 +467,7 @@ namespace {
         auto n = N;
         for (auto i = 0; i < 6; i++) {
             for (auto j = 0; j < 2; j++) {
-                std::cout << n << "個を計測中\n";
+                std::cout << n << "個を計測中...\n";
 
                 std::vector<std::int32_t> vec(n);
                 std::iota(vec.begin(), vec.end(), 1);
