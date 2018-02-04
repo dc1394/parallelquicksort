@@ -562,9 +562,9 @@ namespace {
                 break;
             }
 
-            auto beg = high_resolution_clock::now();
+            auto const beg = high_resolution_clock::now();
             func(vec);
-            auto end = high_resolution_clock::now();
+            auto const end = high_resolution_clock::now();
 
             elapsed_time += (duration_cast<duration<double>>(end - beg)).count();
         }
