@@ -1,34 +1,40 @@
-﻿#include <algorithm>				// for std::partition, std::shuffle, std::sort
-#include <array>					// for std::array
-#include <chrono>					// for std::chrono
-#include <cstdint>					// for std::int32_t
-#include <fstream>					// for std::ofstream
-#include <iostream>					// for std::cout
+﻿/*! \file parallelquicksort.cpp
+    \brief スレッド並列化したクイックソートのパフォーマンスをチェックする
+
+    Copyright © 2017 @dc1394 All Rights Reserved.
+    This software is released under the BSD 2-Clause License.
+*/
+
+#include <algorithm>                // for std::partition, std::shuffle, std::sort
+#include <array>                    // for std::array
+#include <chrono>                   // for std::chrono
+#include <cstdint>                  // for std::int32_t
+#include <fstream>                  // for std::ofstream
+#include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
-#include <numeric>					// for std::iota
-#include <random>					// for std::mt19937, std::random_device
-#include <stack>					// for std::stack
-#include <string>					// for std::string
-#include <thread>					// for std::thread
-#include <tuple>					// for std::tie
-#include <utility>					// for std::pair
-#include <vector>					// for std::vector
+#include <numeric>                  // for std::iota
+#include <random>                   // for std::mt19937, std::random_device
+#include <stack>                    // for std::stack
+#include <thread>                   // for std::thread
+#include <tuple>                    // for std::tie
+#include <utility>                  // for std::pair
+#include <vector>                   // for std::vector
 
 #if __INTEL_COMPILER >= 18
 #include <pstl/algorithm>
-#include <pstl/execution>			// for std::execution::par_unseq
+#include <pstl/execution>           // for std::execution::par_unseq
 #endif
 
-#include <boost/assert.hpp>			// for boost::assert
-#include <boost/format.hpp>			// for boost::format
-#include <boost/thread.hpp>			// for boost::thread::physical_concurrency
+#include <boost/assert.hpp>         // for boost::assert
+#include <boost/format.hpp>         // for boost::format
+#include <boost/thread.hpp>         // for boost::thread::physical_concurrency
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
-#include <cilk/cilk.h>				// for cilk_spawn, cilk_sync
+#include <cilk/cilk.h>              // for cilk_spawn, cilk_sync
 #endif
 
-#include <tbb/parallel_invoke.h>	// for tbb::parallel_invoke
-#include <tbb/parallel_sort.h>		// for tbb::parallel_sort
+#include <tbb/parallel_invoke.h>    // for tbb::parallel_invoke
+#include <tbb/parallel_sort.h>      // for tbb::parallel_sort
 
 namespace {
     //! A enumerated type
@@ -69,7 +75,7 @@ namespace {
         クイックソートにおける閾値
     */
     static auto constexpr THRESHOLD = 500;
-    
+
     //! A function.
     /*!
         並列化されたソート関数のパフォーマンスをチェックする
@@ -191,13 +197,13 @@ namespace {
         if (num >= THRESHOLD && reci <= NUMPHYSICALCORE) {
             // 交点まで左右から入れ替えして交点を探す
             auto const middle = std::partition(first + 1, last, [first](auto n) { return n < *first; });
-            
+
             // 交点 - 1の位置
             auto const mid = middle - 1;
 
             // 交点を移動
             std::iter_swap(first, mid);
-            
+
             // 下部をソート（別スレッドで実行）
             cilk_spawn quick_sort_cilk(first, mid, reci);
 
@@ -258,7 +264,7 @@ namespace {
 
             // 交点 - 1の位置
             auto const mid = middle - 1;
-            
+
             // 交点を移動
             std::iter_swap(first, mid);
 
@@ -324,7 +330,7 @@ namespace {
         if (num >= THRESHOLD && reci <= NUMPHYSICALCORE) {
             // 交点まで左右から入れ替えして交点を探す
             auto const middle = std::partition(first + 1, last, [first](auto n) { return n < *first; });
-            
+
             // 交点 - 1の位置
             auto const mid = middle - 1;
 
@@ -333,10 +339,10 @@ namespace {
 
             // 二つのラムダ式を別スレッドで実行
             tbb::parallel_invoke(
-                    // 下部をソート
-                    [first, mid, reci]() { quick_sort_tbb(first, mid, reci); },
-                    // 上部をソート
-                    [middle, last, reci]() { quick_sort_tbb(middle, last, reci); });
+                // 下部をソート
+                [first, mid, reci]() { quick_sort_tbb(first, mid, reci); },
+                // 上部をソート
+                [middle, last, reci]() { quick_sort_tbb(middle, last, reci); });
         }
         else {
             // 再帰なしのクイックソートの関数を呼び出す
@@ -384,7 +390,7 @@ namespace {
         if (num >= THRESHOLD && reci <= NUMPHYSICALCORE) {
             // 交点まで左右から入れ替えして交点を探す
             auto const middle = std::partition(first + 1, last, [first](auto n) { return n < *first; });
-            
+
             // 交点 - 1の位置
             auto const mid = middle - 1;
 
@@ -393,10 +399,10 @@ namespace {
 
             // 下部をソート（別スレッドで実行）
             auto th1 = std::thread([first, mid, reci]() { quick_sort_thread(first, mid, reci); });
-            
+
             // 上部をソート（別スレッドで実行）
             auto th2 = std::thread([middle, last, reci]() { quick_sort_thread(middle, last, reci); });
-            
+
             // 二つのスレッドの終了を待機
             th1.join();
             th2.join();
@@ -440,7 +446,7 @@ int main()
     std::ofstream ofsrandom("完全にシャッフルされたデータ.csv");
     std::ofstream ofssort("あらかじめソートされたデータ.csv");
     std::ofstream ofsquartersort("最初の1_4だけソートされたデータ.csv");
-    
+
     std::cout << "完全にシャッフルされたデータを計測中...\n";
     check_performance(Checktype::RANDOM, ofsrandom);
 
@@ -461,12 +467,12 @@ namespace {
         auto n = N;
         for (auto i = 0; i < 6; i++) {
             for (auto j = 0; j < 2; j++) {
-                std::cout << n << "個を計測中\n";
+                std::cout << n << "個を計測中...\n";
 
                 std::vector<std::int32_t> vec(n);
                 std::iota(vec.begin(), vec.end(), 1);
-                std::vector<std::int32_t> vecback(vec);
-                
+                auto const vecback(vec);
+
                 std::array< std::vector<std::int32_t>, 8 > vecar;
 
                 ofs << n << ',';
@@ -501,13 +507,13 @@ namespace {
 #if !defined(__INTEL_COMPILER) && __GNUC__ < 5
                     if (i == 5) {
                         continue;
-                    }                    
+                    }
 #endif
 
 #if __INTEL_COMPILER < 18
                     if (i == 7) {
                         continue;
-                    }                    
+                    }
 #endif
 
                     if (!vec_check(vecback, vecar[i])) {
@@ -527,7 +533,7 @@ namespace {
     std::vector<std::int32_t> elapsed_time(Checktype checktype, std::function<void(std::vector<std::int32_t> &)> const & func, std::int32_t n, std::ofstream & ofs)
     {
         using namespace std::chrono;
-        
+
         std::vector<std::int32_t> vec(n);
         std::iota(vec.begin(), vec.end(), 1);
 
@@ -556,24 +562,27 @@ namespace {
                 break;
             }
 
-            auto beg = high_resolution_clock::now();
+            auto const beg = high_resolution_clock::now();
             func(vec);
-            auto end = high_resolution_clock::now();
-        
+            auto const end = high_resolution_clock::now();
+
             elapsed_time += (duration_cast<duration<double>>(end - beg)).count();
         }
-        
+
         ofs << boost::format("%.10f") % (elapsed_time / static_cast<double>(CHECKLOOP)) << ',';
 
         return vec;
     }
-    
+
 #ifdef DEBUG
     bool vec_check(std::vector<std::int32_t> const & v1, std::vector<std::int32_t> const & v2)
     {
-        for (auto i = 0; i < N; i++) {
+        auto const size = v1.size();
+        BOOST_ASSERT(size == v2.size());
+
+        for (auto i = 0; i < size; i++) {
             if (v1[i] != v2[i]) {
-                std::cerr << "Error! i = " << i << std::endl;
+                std::cerr << "Error! i = " << i << '\n';
                 return false;
             }
         }
