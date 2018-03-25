@@ -117,8 +117,8 @@ namespace {
             // 範囲の情報をスタックから取り出す
             // C++17の構造化束縛を使いたいが
             // Intel C++ Compiler 18.0は未だに構造化束縛をサポートしていない
-            RandomIter left, right;
-            std::tie(left, right) = stack.top();
+            //RandomIter left, right;
+            auto [left, right] = stack.top();
             stack.pop();
 
             auto i = left;
@@ -492,7 +492,7 @@ namespace {
                 vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
 
 #if __INTEL_COMPILER >= 18
-                vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
                 ofs << std::endl;
 
