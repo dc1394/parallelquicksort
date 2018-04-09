@@ -20,10 +20,8 @@
 #include <utility>                  // for std::pair
 #include <vector>                   // for std::vector
 
-#if __INTEL_COMPILER >= 18
 #include <pstl/algorithm>
 #include <pstl/execution>           // for std::execution::par_unseq
-#endif
 
 #include <boost/assert.hpp>         // for boost::assert
 #include <boost/format.hpp>         // for boost::format
@@ -491,10 +489,9 @@ namespace {
 #endif
                 vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
 
-#if __INTEL_COMPILER >= 18
                 vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
-#endif
-                ofs << std::endl;
+
+				ofs << std::endl;
 
 #ifdef DEBUG
                 for (auto i = 0U; i < vecar.size(); i++) {
@@ -510,11 +507,9 @@ namespace {
                     }
 #endif
 
-#if __INTEL_COMPILER < 18
                     if (i == 7) {
                         continue;
                     }
-#endif
 
                     if (!vec_check(vecback, vecar[i])) {
                         std::cout << "Error! vecar[" << i << ']' << std::endl;
