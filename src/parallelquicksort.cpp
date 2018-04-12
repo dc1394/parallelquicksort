@@ -9,6 +9,7 @@
 #include <array>                    // for std::array
 #include <chrono>                   // for std::chrono
 #include <cstdint>                  // for std::int32_t
+#include <cstdio>					// for std::fclose, std::fopen, std::fread
 #include <fstream>                  // for std::ifstream, std::ofstream
 #include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
@@ -56,7 +57,7 @@ namespace {
     /*!
         計測する回数
     */
-    static auto constexpr CHECKLOOP = 5;
+    static auto constexpr CHECKLOOP = 10;
 
     //! A global variable (constant expression).
     /*!
@@ -81,8 +82,9 @@ namespace {
         並列化されたソート関数のパフォーマンスをチェックする
         \param checktype パフォーマンスをチェックする際の対象配列の種類
         \param ofs 出力用のファイルストリーム
+		\param 成功したかどうか
     */
-    void check_performance(Checktype checktype, std::ofstream & ofs);
+    bool check_performance(Checktype checktype, std::ofstream & ofs);
 
     //! A function.
     /*!
@@ -453,31 +455,39 @@ int main()
     std::ofstream ofsquartersort("最初の1_4だけソートされたデータ.csv");
 
     std::cout << "完全にシャッフルされたデータを計測中...\n";
-    check_performance(Checktype::RANDOM, ofsrandom);
+	if (!check_performance(Checktype::RANDOM, ofsrandom)) {
+		return -1;
+	}
 
     std::cout << "\nあらかじめソートされたデータを計測中...\n";
-    check_performance(Checktype::SORT, ofssort);
+	if (check_performance(Checktype::SORT, ofssort)) {
+		return -1;
+	}
 
     std::cout << "\n最初の1_4だけソートされたデータを計測中...\n";
-    check_performance(Checktype::QUARTERSORT, ofsquartersort);
+	if (check_performance(Checktype::QUARTERSORT, ofsquartersort)) {
+		return - 1;
+	}
 
     return 0;
 }
 
 namespace {
-    void check_performance(Checktype checktype, std::ofstream & ofs)
+    bool check_performance(Checktype checktype, std::ofstream & ofs)
     {
         std::array< std::uint8_t, 3 > bom = { 0xEF, 0xBB, 0xBF };
         ofs.write(reinterpret_cast<char *>(bom.data()), sizeof(bom));
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallelism TS)\n";
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) || _OPENMP < 200805
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
 #else
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
 #endif
         
+		auto issuccess = true;
+
         auto n = N;
         for (auto i = 0; i < 6; i++) {
             for (auto j = 0; j < 2; j++) {
@@ -526,8 +536,14 @@ namespace {
                         continue;
                     }
 
+					if (vecar[i].size() != n) {
+						issuccess = false;
+						continue;
+					}
+
                     if (!vec_check(vecback, vecar[i])) {
                         std::cerr << "Error! vecar[" << i << ']' << std::endl;
+						issuccess = false;
                     }
                 }
 #endif
@@ -538,6 +554,8 @@ namespace {
 
             n *= 5;
         }
+
+		return issuccess;
     }
 
     std::vector<std::int32_t> elapsed_time(Checktype checktype, std::function<void(std::vector<std::int32_t> &)> const & func, std::int32_t n, std::ofstream & ofs)
@@ -545,36 +563,35 @@ namespace {
         using namespace std::chrono;
 
 		std::vector<std::int32_t> vec(n);
+		std::unique_ptr< FILE, decltype(&std::fclose) > fp(nullptr, fclose);
+
+		switch (checktype) {
+		case Checktype::RANDOM:
+			fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
+			break;
+
+		case Checktype::SORT:
+			fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
+			break;
+
+		case Checktype::QUARTERSORT:
+			fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
+			break;
+
+		default:
+			BOOST_ASSERT(!"switchのdefaultに来てしまった！");
+			break;
+		}
+
+		if (fp == nullptr) {
+			std::cerr << "ソート対象のデータが格納されたファイルが存在しません！" << std::endl;
+			return std::vector<std::int32_t>();
+		}
+		std::fread(vec.data(), sizeof(std::int32_t), vec.size(), fp.get());
 
         auto elapsed_time = 0.0;
+		
         for (auto i = 1; i <= CHECKLOOP; i++) {
-            switch (checktype) {
-            case Checktype::RANDOM:
-            {
-				std::ifstream ifs((boost::format("sortdata_%d_rand.dat") % n).str());
-				ifs.read(reinterpret_cast<char *>(vec.data()), vec.size() * sizeof(std::int32_t));
-            }
-            break;
-
-            case Checktype::SORT:
-			{
-				std::ifstream ifs((boost::format("sortdata_%d_already.dat") % n).str());
-				ifs.read(reinterpret_cast<char *>(vec.data()), vec.size() * sizeof(std::int32_t));
-			}
-            break;
-
-            case Checktype::QUARTERSORT:
-            {
-				std::ifstream ifs((boost::format("sortdata_%d_quartersort.dat") % n).str());
-				ifs.read(reinterpret_cast<char *>(vec.data()), vec.size() * sizeof(std::int32_t));
-            }
-            break;
-
-            default:
-                BOOST_ASSERT(!"switchのdefaultに来てしまった！");
-                break;
-            }
-
             auto const beg = high_resolution_clock::now();
             func(vec);
             auto const end = high_resolution_clock::now();
