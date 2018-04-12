@@ -18,13 +18,14 @@
 #include <thread>                   // for std::thread
 #include <tuple>                    // for std::tie
 #include <utility>                  // for std::pair
-#include <vector>                   // for std::vector
+#include <valarray>                 // for std::vector
 
 #include <pstl/algorithm>
 #include <pstl/execution>           // for std::execution::par_unseq
 
 #include <boost/assert.hpp>         // for boost::assert
 #include <boost/format.hpp>         // for boost::format
+#include <boost/locale/encoding.hpp>
 #include <boost/thread.hpp>         // for boost::thread::physical_concurrency
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
@@ -54,7 +55,7 @@ namespace {
     /*!
         計測する回数
     */
-    static auto constexpr CHECKLOOP = 10;
+    static auto constexpr CHECKLOOP = 20;
 
     //! A global variable (constant expression).
     /*!
@@ -113,10 +114,15 @@ namespace {
         // スタックが空になるまで繰り返す
         while (!stack.empty()) {
             // 範囲の情報をスタックから取り出す
-            // C++17の構造化束縛を使いたいが
+
+#ifdef __INTEL_COMPILER
             // Intel C++ Compiler 18.0は未だに構造化束縛をサポートしていない
-            //RandomIter left, right;
+            RandomIter left, right;
+            std::tie(left, right) = stack.top();
+#else
+            // C++17の構造化束縛を使う
             auto [left, right] = stack.top();
+#endif
             stack.pop();
 
             auto i = left;
@@ -460,10 +466,19 @@ int main()
 namespace {
     void check_performance(Checktype checktype, std::ofstream & ofs)
     {
-        ofs << "配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallelism TS)\n";
+        std::array< std::uint8_t, 3 > bom = { 0xEF, 0xBB, 0xBF };
+        ofs.write(reinterpret_cast<char *>(bom.data()), sizeof(bom));
 
+#if defined(__INTEL_COMPILER) || __GNUC__ >= 5
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallelism TS)\n";
+#elif defined(_MSC_VER)
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
+#else
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
+#endif
+        
         auto n = N;
-        for (auto i = 0; i < 6; i++) {
+        for (auto i = 0; i < 2; i++) {
             for (auto j = 0; j < 2; j++) {
                 std::cout << n << "個を計測中...\n";
 
@@ -478,17 +493,16 @@ namespace {
                 vecar[0] = elapsed_time(checktype, [](auto & vec) { std::sort(vec.begin(), vec.end()); }, n, ofs);
                 vecar[1] = elapsed_time(checktype, [](auto & vec) { quick_sort(vec.begin(), vec.end()); }, n, ofs);
                 vecar[2] = elapsed_time(checktype, [](auto & vec) { quick_sort_thread(vec.begin(), vec.end()); }, n, ofs);
-
+                
 #if _OPENMP >= 200805
                 vecar[3] = elapsed_time(checktype, [](auto & vec) { quick_sort_openmp(vec.begin(), vec.end()); }, n, ofs);
 #endif
                 vecar[4] = elapsed_time(checktype, [](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
-
+                
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
                 vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
 #endif
                 vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
-
                 vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
 
 				ofs << std::endl;
@@ -512,7 +526,7 @@ namespace {
                     }
 
                     if (!vec_check(vecback, vecar[i])) {
-                        std::cout << "Error! vecar[" << i << ']' << std::endl;
+                        std::cerr << "Error! vecar[" << i << ']' << std::endl;
                     }
                 }
 #endif
@@ -564,7 +578,7 @@ namespace {
             elapsed_time += (duration_cast<duration<double>>(end - beg)).count();
         }
 
-        ofs << boost::format("%.10f") % (elapsed_time / static_cast<double>(CHECKLOOP)) << ',';
+        ofs << boost::format(u8"%.10f") % (elapsed_time / static_cast<double>(CHECKLOOP)) << ',';
 
         return vec;
     }
