@@ -5,27 +5,28 @@
     This software is released under the BSD 2-Clause License.
 */
 
-#include <algorithm>                // for std::partition, std::shuffle, std::sort
+#include <algorithm>                // for std::partition, std::sort
 #include <array>                    // for std::array
 #include <chrono>                   // for std::chrono
 #include <cstdint>                  // for std::int32_t
-#include <fstream>                  // for std::ofstream
+#include <fstream>                  // for std::ifstream, std::ofstream
 #include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
-#include <numeric>                  // for std::iota
-#include <random>                   // for std::mt19937, std::random_device
 #include <stack>                    // for std::stack
 #include <thread>                   // for std::thread
-#include <tuple>                    // for std::tie
+
+#ifdef __INTEL_COMPILER
+	#include <tuple>                // for std::tie
+#endif
+
 #include <utility>                  // for std::pair
-#include <valarray>                 // for std::vector
+#include <vector>                   // for std::vector
 
 #include <pstl/algorithm>
 #include <pstl/execution>           // for std::execution::par_unseq
 
 #include <boost/assert.hpp>         // for boost::assert
 #include <boost/format.hpp>         // for boost::format
-#include <boost/locale/encoding.hpp>
 #include <boost/thread.hpp>         // for boost::thread::physical_concurrency
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
@@ -55,7 +56,7 @@ namespace {
     /*!
         計測する回数
     */
-    static auto constexpr CHECKLOOP = 20;
+    static auto constexpr CHECKLOOP = 5;
 
     //! A global variable (constant expression).
     /*!
@@ -478,7 +479,7 @@ namespace {
 #endif
         
         auto n = N;
-        for (auto i = 0; i < 2; i++) {
+        for (auto i = 0; i < 6; i++) {
             for (auto j = 0; j < 2; j++) {
                 std::cout << n << "個を計測中...\n";
 
@@ -543,26 +544,29 @@ namespace {
     {
         using namespace std::chrono;
 
-        std::vector<std::int32_t> vec(n);
-        std::iota(vec.begin(), vec.end(), 1);
+		std::vector<std::int32_t> vec(n);
 
         auto elapsed_time = 0.0;
         for (auto i = 1; i <= CHECKLOOP; i++) {
             switch (checktype) {
             case Checktype::RANDOM:
             {
-                std::random_device rnd;
-                std::shuffle(vec.begin(), vec.end(), std::mt19937(rnd()));
+				std::ifstream ifs((boost::format("sortdata_%d_rand.dat") % n).str());
+				ifs.read(reinterpret_cast<char *>(vec.data()), vec.size() * sizeof(std::int32_t));
             }
             break;
 
             case Checktype::SORT:
-                break;
+			{
+				std::ifstream ifs((boost::format("sortdata_%d_already.dat") % n).str());
+				ifs.read(reinterpret_cast<char *>(vec.data()), vec.size() * sizeof(std::int32_t));
+			}
+            break;
 
             case Checktype::QUARTERSORT:
             {
-                std::random_device rnd;
-                std::shuffle(vec.begin() + n / 4, vec.end(), std::mt19937(rnd()));
+				std::ifstream ifs((boost::format("sortdata_%d_quartersort.dat") % n).str());
+				ifs.read(reinterpret_cast<char *>(vec.data()), vec.size() * sizeof(std::int32_t));
             }
             break;
 
