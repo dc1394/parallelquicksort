@@ -24,7 +24,7 @@
 #include <vector>                   // for std::vector
 
 #include <pstl/algorithm>
-#include <pstl/execution>           // for std::execution::par_unseq
+#include <pstl/execution>           // for std::execution::par
 
 #include <boost/assert.hpp>         // for boost::assert
 #include <boost/format.hpp>         // for boost::format
@@ -514,7 +514,7 @@ namespace {
                 vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
 #endif
                 vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
-                vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 
 				ofs << std::endl;
 
