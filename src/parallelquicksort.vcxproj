@@ -73,6 +73,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\mylib64\parallelstl-20180329\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\mylib64\boost_1_66_0\stage\x86\icl18\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -91,9 +92,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_SCL_SECURE_NO_WARNINGS;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile />
-      <Cpp0xSupport>true</Cpp0xSupport>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,16 +143,14 @@
       <OptimizeForWindowsApplication>true</OptimizeForWindowsApplication>
       <PrecompiledHeaderFile />
       <OpenMP>GenerateParallelCode</OpenMP>
-      <Cpp0xSupport>true</Cpp0xSupport>
       <OmitFramePointers>true</OmitFramePointers>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
-      <UseProcessorExtensions>AVX2</UseProcessorExtensions>
+      <UseProcessorExtensions>HOST</UseProcessorExtensions>
       <FlushDenormalResultsToZero>true</FlushDenormalResultsToZero>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <OpenMPSupport>true</OpenMPSupport>
       <Optimization>Full</Optimization>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

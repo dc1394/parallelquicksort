@@ -9,8 +9,8 @@
 #include <array>                    // for std::array
 #include <chrono>                   // for std::chrono
 #include <cstdint>                  // for std::int32_t
-#include <cstdio>					// for std::fclose, std::fopen, std::fread
-#include <fstream>                  // for std::ifstream, std::ofstream
+#include <cstdio>					// for std::fclose, std::fopen, std::fread, std::rewind
+#include <fstream>                  // for std::ofstream
 #include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
 #include <stack>                    // for std::stack
@@ -460,12 +460,12 @@ int main()
 	}
 
     std::cout << "\nあらかじめソートされたデータを計測中...\n";
-	if (check_performance(Checktype::SORT, ofssort)) {
+	if (!check_performance(Checktype::SORT, ofssort)) {
 		return -1;
 	}
 
     std::cout << "\n最初の1_4だけソートされたデータを計測中...\n";
-	if (check_performance(Checktype::QUARTERSORT, ofsquartersort)) {
+	if (!check_performance(Checktype::QUARTERSORT, ofsquartersort)) {
 		return - 1;
 	}
 
@@ -475,8 +475,8 @@ int main()
 namespace {
     bool check_performance(Checktype checktype, std::ofstream & ofs)
     {
-        std::array< std::uint8_t, 3 > bom = { 0xEF, 0xBB, 0xBF };
-        ofs.write(reinterpret_cast<char *>(bom.data()), sizeof(bom));
+        std::array< std::uint8_t, 3 > const bom = { 0xEF, 0xBB, 0xBF };
+        ofs.write(reinterpret_cast<const char *>(bom.data()), sizeof(bom));
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallelism TS)\n";
@@ -597,6 +597,11 @@ namespace {
             auto const end = high_resolution_clock::now();
 
             elapsed_time += (duration_cast<duration<double>>(end - beg)).count();
+			
+			if (i != CHECKLOOP) {
+				std::rewind(fp.get());
+				std::fread(vec.data(), sizeof(std::int32_t), vec.size(), fp.get());
+			}
         }
 
         ofs << boost::format(u8"%.10f") % (elapsed_time / static_cast<double>(CHECKLOOP)) << ',';
