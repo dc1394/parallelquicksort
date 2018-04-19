@@ -13,6 +13,7 @@
 #include <fstream>                  // for std::ofstream
 #include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
+#include <numeric>					// for std::iota
 #include <stack>                    // for std::stack
 #include <thread>                   // for std::thread
 
@@ -514,7 +515,12 @@ namespace {
                 vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
 #endif
                 vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
+
+#ifdef _MSC_VER
+				vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+#else
                 vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
+#endif
 
 				ofs << std::endl;
 
