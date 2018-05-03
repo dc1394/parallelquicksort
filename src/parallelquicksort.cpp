@@ -9,11 +9,11 @@
 #include <array>                    // for std::array
 #include <chrono>                   // for std::chrono
 #include <cstdint>                  // for std::int32_t
-#include <cstdio>					// for std::fclose, std::fopen, std::fread, std::rewind
+#include <cstdio>                   // for std::fclose, std::fopen, std::fread, std::rewind
 #include <fstream>                  // for std::ofstream
 #include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
-#include <numeric>					// for std::iota
+#include <numeric>                  // for std::iota
 #include <stack>                    // for std::stack
 #include <thread>                   // for std::thread
 
