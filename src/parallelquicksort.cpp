@@ -10,10 +10,13 @@
 #include <chrono>                   // for std::chrono
 #include <cstdint>                  // for std::int32_t
 #include <cstdio>					// for std::fclose, std::fopen, std::fread, std::rewind
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+	#include <execution>			// for std::execution
+#endif
 #include <fstream>                  // for std::ofstream
 #include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
-#include <numeric>                  // for std::iota
+#include <numeric>					// for std::iota
 #include <stack>                    // for std::stack
 #include <thread>                   // for std::thread
 
@@ -83,7 +86,7 @@ namespace {
         並列化されたソート関数のパフォーマンスをチェックする
         \param checktype パフォーマンスをチェックする際の対象配列の種類
         \param ofs 出力用のファイルストリーム
-		\param 成功したかどうか
+		\return 成功したかどうか
     */
     bool check_performance(Checktype checktype, std::ofstream & ofs);
 
@@ -514,12 +517,12 @@ namespace {
                 vecar[4] = elapsed_time(checktype, [](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
                 
 #ifdef __INTEL_COMPILER
-				vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
+                vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
 #endif
                 vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
 
-#ifdef _MSC_VER
-				vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+                vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
                 vecar[8] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
 
