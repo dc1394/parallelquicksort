@@ -481,8 +481,10 @@ namespace {
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallelism TS)\n";
-#elif defined(_MSC_VER) || _OPENMP < 200805
+#elif defined(_MSC_VER)
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS) VC内蔵,std::sort (Parallelism TS)\n";
+#elif _OPENMP < 200805
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
 #else
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
 #endif
@@ -517,9 +519,7 @@ namespace {
                 vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
 
 #ifdef _MSC_VER
-				vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
-#else
-                vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
+				vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
                 vecar[8] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
 
