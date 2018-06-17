@@ -1,7 +1,7 @@
 ﻿/*! \file parallelquicksort.cpp
     \brief スレッド並列化したクイックソートのパフォーマンスをチェックする
 
-    Copyright © 2017 @dc1394 All Rights Reserved.
+    Copyright © 2017-2018 @dc1394 All Rights Reserved.
     This software is released under the BSD 2-Clause License.
 */
 
@@ -10,6 +10,9 @@
 #include <chrono>                   // for std::chrono
 #include <cstdint>                  // for std::int32_t
 #include <cstdio>					// for std::fclose, std::fopen, std::fread, std::rewind
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+	#include <execution>			// for std::execution
+#endif
 #include <fstream>                  // for std::ofstream
 #include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
@@ -25,14 +28,14 @@
 #include <vector>                   // for std::vector
 
 #include <pstl/algorithm>
-#include <pstl/execution>           // for std::execution::par
+#include <pstl/execution>           // for pstl::execution::par
 
 #include <boost/assert.hpp>         // for boost::assert
 #include <boost/format.hpp>         // for boost::format
 #include <boost/thread.hpp>         // for boost::thread::physical_concurrency
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
-#include <cilk/cilk.h>              // for cilk_spawn, cilk_sync
+	#include <cilk/cilk.h>          // for cilk_spawn, cilk_sync
 #endif
 
 #include <tbb/parallel_invoke.h>    // for tbb::parallel_invoke
@@ -83,7 +86,7 @@ namespace {
         並列化されたソート関数のパフォーマンスをチェックする
         \param checktype パフォーマンスをチェックする際の対象配列の種類
         \param ofs 出力用のファイルストリーム
-		\param 成功したかどうか
+		\return 成功したかどうか
     */
     bool check_performance(Checktype checktype, std::ofstream & ofs);
 
@@ -482,7 +485,7 @@ namespace {
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallelism TS)\n";
 #elif defined(_MSC_VER) || _OPENMP < 200805
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS) VC内蔵,std::sort (Parallelism TS)\n";
 #else
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
 #endif
@@ -498,7 +501,7 @@ namespace {
                 std::iota(vec.begin(), vec.end(), 1);
                 auto const vecback(vec);
 
-                std::array< std::vector<std::int32_t>, 8 > vecar;
+                std::array< std::vector<std::int32_t>, 9 > vecar;
 
                 ofs << n << ',';
 
@@ -511,16 +514,15 @@ namespace {
 #endif
                 vecar[4] = elapsed_time(checktype, [](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
                 
-#if defined(__INTEL_COMPILER) || __GNUC__ >= 5
-                vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
+#ifdef __INTEL_COMPILER
+				vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
 #endif
                 vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
 
-#ifdef _MSC_VER
-				vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
-#else
-                vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+				vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
+                vecar[8] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
 
 				ofs << std::endl;
 
@@ -538,7 +540,7 @@ namespace {
                     }
 #endif
 
-                    if (i == 7) {
+                    if (!i || i == 6 || i == 7 || i == 8) {
                         continue;
                     }
 
