@@ -9,14 +9,14 @@
 #include <array>                    // for std::array
 #include <chrono>                   // for std::chrono
 #include <cstdint>                  // for std::int32_t
-#include <cstdio>					// for std::fclose, std::fopen, std::fread, std::rewind
+#include <cstdio>                   // for std::fclose, std::fopen, std::fread, std::rewind
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-	#include <execution>			// for std::execution
+    #include <execution>            // for std::execution
 #endif
 #include <fstream>                  // for std::ofstream
 #include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
-#include <numeric>					// for std::iota
+#include <numeric>                  // for std::iota
 #include <stack>                    // for std::stack
 #include <thread>                   // for std::thread
 
@@ -35,7 +35,7 @@
 #include <boost/thread.hpp>         // for boost::thread::physical_concurrency
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
-	#include <cilk/cilk.h>          // for cilk_spawn, cilk_sync
+    #include <cilk/cilk.h>          // for cilk_spawn, cilk_sync
 #endif
 
 #include <tbb/parallel_invoke.h>    // for tbb::parallel_invoke

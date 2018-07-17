@@ -6,9 +6,9 @@ DEPS = parallelquicksort.d
 
 VPATH  = src
 CXX = icpc
-CXXFLAGS = -Wall -Wextra -O3 -xHOST -ipo -pipe -std=c++14 -fopenmp -I/home/dc1394/oss/parallelstl/include
-LDFLAGS = -L/home/dc1394/oss/tbb2018_20180312oss/lib/intel64/gcc4.7 -ltbb \
-		  -L/home/dc1394/oss/boost_1_66_0/stage/icc/lib -lboost_system -lboost_thread
+CXXFLAGS = -Wall -Wextra -O3 -xHOST -ipo -pipe -std=c++14 -fopenmp -I/home/dc1394/oss/parallelstl-20180529/include
+LDFLAGS = -L/home/dc1394/oss/tbb2018_20180411oss/lib/intel64/gcc4.7 -ltbb \
+		  -L/home/dc1394/oss/boost_1_67_0/stage/icc/lib -lboost_system -lboost_thread
 
 all: $(PROG) ;
 #rm -f $(OBJS) $(DEPS)
