@@ -582,7 +582,7 @@ namespace {
         switch (checktype) {
         case Checktype::RANDOM:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
-            if (fp == nullptr) {
+            if (!fp) {
                 (boost::process::child(path.string() + (boost::format(" 0 %d") % n).str())).wait();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
             }
@@ -590,7 +590,7 @@ namespace {
 
         case Checktype::SORT:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
-            if (fp == nullptr) {
+            if (!fp) {
                 (boost::process::child(path.string() + (boost::format(" 1 %d") % n).str())).wait();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
             }
@@ -598,7 +598,7 @@ namespace {
 
         case Checktype::QUARTERSORT:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
-            if (fp == nullptr) {
+            if (!fp) {
                 (boost::process::child(path.string() + (boost::format(" 2 %d") % n).str())).wait();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
             }
