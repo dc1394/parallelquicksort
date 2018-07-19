@@ -32,6 +32,7 @@
 
 #include <boost/assert.hpp>         // for boost::assert
 #include <boost/format.hpp>         // for boost::format
+#include <boost/process.hpp>        // for boost::process
 #include <boost/thread.hpp>         // for boost::thread::physical_concurrency
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
@@ -468,9 +469,9 @@ int main()
         return -1;
     }
 
-    std::cout << "\n最初の1_4だけソートされたデータを計測中...\n";
+    std::cout << "\n最初の1/4だけソートされたデータを計測中...\n";
     if (!check_performance(Checktype::QUARTERSORT, ofsquartersort)) {
-        return - 1;
+        return -1;
     }
 
     return 0;
@@ -578,25 +579,33 @@ namespace {
         switch (checktype) {
         case Checktype::RANDOM:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
+            if (fp == nullptr) {
+                (boost::process::child((boost::format("makequicksortdata 0 %d") % n).str())).wait();
+                fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
+            }
             break;
 
         case Checktype::SORT:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
+            if (fp == nullptr) {
+                (boost::process::child((boost::format("makequicksortdata 1 %d") % n).str())).wait();
+                fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
+            }
             break;
 
         case Checktype::QUARTERSORT:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
+            if (fp == nullptr) {
+                (boost::process::child((boost::format("makequicksortdata 2 %d") % n).str())).wait();
+                fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
+            }
             break;
 
         default:
             BOOST_ASSERT(!"switchのdefaultに来てしまった！");
             break;
         }
-
-        if (fp == nullptr) {
-            std::cerr << "ソート対象のデータが格納されたファイルが存在しません！" << std::endl;
-            return std::vector<std::int32_t>();
-        }
+                
         std::fread(vec.data(), sizeof(std::int32_t), vec.size(), fp.get());
 
         auto elapsed_time = 0.0;
