@@ -31,6 +31,7 @@
 #include <pstl/execution>           // for pstl::execution::par
 
 #include <boost/assert.hpp>         // for boost::assert
+#include <boost/filesystem/path.hpp>    // for boost::filesystem
 #include <boost/format.hpp>         // for boost::format
 #include <boost/process.hpp>        // for boost::process
 #include <boost/thread.hpp>         // for boost::thread::physical_concurrency
@@ -576,11 +577,13 @@ namespace {
         std::vector<std::int32_t> vec(n);
         std::unique_ptr< FILE, decltype(&std::fclose) > fp(nullptr, fclose);
 
+        auto const path = boost::filesystem::current_path()/"makequicksortdata";
+
         switch (checktype) {
         case Checktype::RANDOM:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
             if (fp == nullptr) {
-                (boost::process::child((boost::format("makequicksortdata 0 %d") % n).str())).wait();
+                (boost::process::child(path.string() + (boost::format(" 0 %d") % n).str())).wait();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
             }
             break;
@@ -588,7 +591,7 @@ namespace {
         case Checktype::SORT:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
             if (fp == nullptr) {
-                (boost::process::child((boost::format("makequicksortdata 1 %d") % n).str())).wait();
+                (boost::process::child(path.string() + (boost::format(" 1 %d") % n).str())).wait();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
             }
             break;
@@ -596,7 +599,7 @@ namespace {
         case Checktype::QUARTERSORT:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
             if (fp == nullptr) {
-                (boost::process::child((boost::format("makequicksortdata 2 %d") % n).str())).wait();
+                (boost::process::child(path.string() + (boost::format(" 2 %d") % n).str())).wait();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
             }
             break;
