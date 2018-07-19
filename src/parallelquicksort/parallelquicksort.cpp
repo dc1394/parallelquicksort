@@ -5,43 +5,43 @@
     This software is released under the BSD 2-Clause License.
 */
 
-#include <algorithm>                // for std::partition, std::sort
-#include <array>                    // for std::array
-#include <chrono>                   // for std::chrono
-#include <cstdint>                  // for std::int32_t
-#include <cstdio>                   // for std::fclose, std::fopen, std::fread, std::rewind
+#include <algorithm>                    // for std::partition, std::sort
+#include <array>                        // for std::array
+#include <chrono>                       // for std::chrono
+#include <cstdint>                      // for std::int32_t
+#include <cstdio>                       // for std::fclose, std::fopen, std::fread, std::rewind
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-    #include <execution>            // for std::execution
+    #include <execution>                // for std::execution
 #endif
-#include <fstream>                  // for std::ofstream
-#include <iostream>                 // for std::cerr, std::cout, std::endl
-#include <iterator>                 // for std::distance
-#include <numeric>                  // for std::iota
-#include <stack>                    // for std::stack
-#include <thread>                   // for std::thread
+#include <fstream>                      // for std::ofstream
+#include <iostream>                     // for std::cerr, std::cout, std::endl
+#include <iterator>                     // for std::distance
+#include <numeric>                      // for std::iota
+#include <stack>                        // for std::stack
+#include <thread>                       // for std::thread
 
 #ifdef __INTEL_COMPILER
-    #include <tuple>                // for std::tie
+    #include <tuple>                    // for std::tie
 #endif
 
-#include <utility>                  // for std::pair
-#include <vector>                   // for std::vector
+#include <utility>                      // for std::pair
+#include <vector>                       // for std::vector
 
 #include <pstl/algorithm>
-#include <pstl/execution>           // for pstl::execution::par
+#include <pstl/execution>               // for pstl::execution::par
 
-#include <boost/assert.hpp>         // for boost::assert
+#include <boost/assert.hpp>             // for boost::assert
 #include <boost/filesystem/path.hpp>    // for boost::filesystem
-#include <boost/format.hpp>         // for boost::format
-#include <boost/process.hpp>        // for boost::process
-#include <boost/thread.hpp>         // for boost::thread::physical_concurrency
+#include <boost/format.hpp>             // for boost::format
+#include <boost/process.hpp>            // for boost::process
+#include <boost/thread.hpp>             // for boost::thread::physical_concurrency
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
-    #include <cilk/cilk.h>          // for cilk_spawn, cilk_sync
+    #include <cilk/cilk.h>              // for cilk_spawn, cilk_sync
 #endif
 
-#include <tbb/parallel_invoke.h>    // for tbb::parallel_invoke
-#include <tbb/parallel_sort.h>      // for tbb::parallel_sort
+#include <tbb/parallel_invoke.h>        // for tbb::parallel_invoke
+#include <tbb/parallel_sort.h>          // for tbb::parallel_sort
 
 namespace {
     //! A enumerated type
@@ -583,7 +583,7 @@ namespace {
         case Checktype::RANDOM:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
             if (!fp) {
-                (boost::process::child(path.string() + (boost::format(" 0 %d") % n).str())).wait();
+                boost::process::child(path.string() + (boost::format(" 0 %d") % n).str()).wait();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
             }
             break;
@@ -591,7 +591,7 @@ namespace {
         case Checktype::SORT:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
             if (!fp) {
-                (boost::process::child(path.string() + (boost::format(" 1 %d") % n).str())).wait();
+                boost::process::child(path.string() + (boost::format(" 1 %d") % n).str()).wait();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
             }
             break;
@@ -599,7 +599,7 @@ namespace {
         case Checktype::QUARTERSORT:
             fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
             if (!fp) {
-                (boost::process::child(path.string() + (boost::format(" 2 %d") % n).str())).wait();
+                boost::process::child(path.string() + (boost::format(" 2 %d") % n).str()).wait();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
             }
             break;

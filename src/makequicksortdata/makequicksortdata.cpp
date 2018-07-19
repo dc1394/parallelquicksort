@@ -79,48 +79,49 @@ int main(int argc, char * argv[])
 }
 
 namespace {
-	bool make_sortdata(Checktype checktype, std::int32_t n)
-	{
-		std::vector<std::int32_t> vec(n);
-		std::iota(vec.begin(), vec.end(), 1);
+    bool make_sortdata(Checktype checktype, std::int32_t n)
+    {
+        std::vector<std::int32_t> vec(n);
+        std::iota(vec.begin(), vec.end(), 1);
 
-		std::unique_ptr< FILE, decltype(&std::fclose) > fp(nullptr, std::fclose);
+        std::unique_ptr< FILE, decltype(&std::fclose) > fp(nullptr, std::fclose);
 
-		switch (checktype) {
-		case Checktype::RANDOM:
-		{
-			std::random_device rnd;
-			std::shuffle(vec.begin(), vec.end(), std::mt19937(rnd()));
-			auto const filename = (boost::format("sortdata_%d_rand.dat") % n).str();
-			fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "wb"), std::fclose);
-		}
-		break;
+        switch (checktype) {
+        case Checktype::RANDOM:
+        {
+            std::random_device rnd;
+            std::shuffle(vec.begin(), vec.end(), std::mt19937(rnd()));
+            auto const filename = (boost::format("sortdata_%d_rand.dat") % n).str();
+            fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "wb"), std::fclose);
+        }
+        break;
 
-		case Checktype::SORT:
-		{
-			auto const filename = (boost::format("sortdata_%d_already.dat") % n).str();
-			fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "wb"), std::fclose);
-		}
-		break;
+        case Checktype::SORT:
+        {
+            auto const filename = (boost::format("sortdata_%d_already.dat") % n).str();
+            fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "wb"), std::fclose);
+        }
+        break;
 
-		case Checktype::QUARTERSORT:
-		{
-			std::random_device rnd;
-			std::shuffle(vec.begin() + n / 4, vec.end(), std::mt19937(rnd()));
-			auto const filename = (boost::format("sortdata_%d_quartersort.dat") % n).str();
-			fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "wb"), std::fclose);
-		}
-		break;
+        case Checktype::QUARTERSORT:
+        {
+            std::random_device rnd;
+            std::shuffle(vec.begin() + n / 4, vec.end(), std::mt19937(rnd()));
+            auto const filename = (boost::format("sortdata_%d_quartersort.dat") % n).str();
+            fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "wb"), std::fclose);
+        }
+        break;
 
-		default:
-			BOOST_ASSERT(!"switchのdefaultに来てしまった！");
-			break;
-		}
+        default:
+            BOOST_ASSERT(!"switchのdefaultに来てしまった！");
+            break;
+        }
 
         if (!fp) {
             return false;
         }
 
         return vec.size() == std::fwrite(vec.data(), sizeof(std::int32_t), vec.size(), fp.get());
-	}
+    }
 }
+
