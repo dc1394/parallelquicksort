@@ -31,7 +31,7 @@
 #include <pstl/execution>               // for pstl::execution::par
 
 #include <boost/assert.hpp>             // for boost::assert
-#include <boost/filesystem/path.hpp>    // for boost::filesystem
+#include <boost/filesystem.hpp>         // for boost::filesystem
 #include <boost/format.hpp>             // for boost::format
 #include <boost/process.hpp>            // for boost::process
 #include <boost/thread.hpp>             // for boost::thread
