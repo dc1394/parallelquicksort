@@ -577,7 +577,7 @@ namespace {
         std::vector<std::int32_t> vec(n);
         std::unique_ptr< FILE, decltype(&std::fclose) > fp(nullptr, fclose);
 
-        auto const path = boost::filesystem::current_path()/"makequicksortdata";
+        auto const path = boost::filesystem::current_path() / "makequicksortdata";
 
         switch (checktype) {
         case Checktype::RANDOM:
