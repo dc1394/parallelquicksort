@@ -1,7 +1,6 @@
 ﻿#include <cstdint>              // for std::int32_t
 #include <cstdio>               // for std::fclose, std::fopen, std::fwrite
 #include <cstdlib>              // for EXIT_FAILURE, EXIT_SUCCESS, std::exit
-#include <iostream>             // for std::cout
 #include <memory>               // for std::unique_ptr
 #include <numeric>              // for std::iota
 #include <random>               // for std::mt19937, std::random_device

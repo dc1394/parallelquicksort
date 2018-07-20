@@ -8,15 +8,17 @@
 　リが必要です。
 　・Boost C++ Libraries
 　・Intel® Threading Building Blocks (Intel® TBB)
+　・Intel Parallel STL
 
 ★更新履歴
 　2017/12/12 ver.1.0   README.mdを書いて公開。
+　2018/7/20  ver.1.1   大幅に修正。
 
 ★ライセンス
 　このソフトはフリーソフトウェアです（2条項BSDライセンス）。
 --------------------------------------------------------------------------------
 　parallelquicksort
-　Copyright (C) 2017 @dc1394
+　Copyright (C) 2017-2018 @dc1394
 
 　ソースコード形式であれバイナリ形式であれ、変更の有無に関わらず、以下の条件を満
 　たす限りにおいて、再配布および利用を許可します。
@@ -37,7 +39,7 @@
 　な損害、特別損害、懲罰的損害または結果損害のいずれに対しても一切責任を負いませ
 　ん。
 
-  Copyright (c) 2017, @dc1394
+  Copyright (c) 2017-2018, @dc1394
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -93,3 +95,6 @@
 　parallelquicksortにはIntel CorporationによるIntel® Threading Building
 　Blocks(Intel® TBB)を使用しています。
   こちらのライセンスは GNU General Public License, version 2 になります。
+
+　parallelquicksortにはIntel CorporationによるIntel Parallel STLを使用しています。
+　こちらのライセンスは Apache License Version 2.0 になります。

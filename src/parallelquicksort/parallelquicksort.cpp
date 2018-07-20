@@ -34,7 +34,7 @@
 #include <boost/filesystem/path.hpp>    // for boost::filesystem
 #include <boost/format.hpp>             // for boost::format
 #include <boost/process.hpp>            // for boost::process
-#include <boost/thread.hpp>             // for boost::thread::physical_concurrency
+#include <boost/thread.hpp>             // for boost::thread
 
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
     #include <cilk/cilk.h>              // for cilk_spawn, cilk_sync
@@ -487,7 +487,7 @@ namespace {
 #if defined(__INTEL_COMPILER) || __GNUC__ >= 5
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallelism TS)\n";
 #elif defined(_MSC_VER)
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS) VC内蔵,std::sort (Parallelism TS)\n";
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS) MSVC内蔵,std::sort (Parallelism TS)\n";
 #elif _OPENMP < 200805
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
 #else
@@ -581,26 +581,35 @@ namespace {
 
         switch (checktype) {
         case Checktype::RANDOM:
-            fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
-            if (!fp) {
-                boost::process::child(path.string() + (boost::format(" 0 %d") % n).str()).wait();
-                fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_rand.dat") % n).str().c_str(), "rb"), std::fclose);
+            {
+                auto const filename = (boost::format("sortdata_%d_rand.dat") % n).str();
+                fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
+                if (!fp) {
+                    boost::process::child(path.string() + (boost::format(" 0 %d") % n).str()).wait();
+                    fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
+                }
             }
             break;
 
         case Checktype::SORT:
-            fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
-            if (!fp) {
-                boost::process::child(path.string() + (boost::format(" 1 %d") % n).str()).wait();
-                fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_already.dat") % n).str().c_str(), "rb"), std::fclose);
+            {
+                auto const filename = (boost::format("sortdata_%d_already.dat") % n).str();
+                fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
+                if (!fp) {
+                    boost::process::child(path.string() + (boost::format(" 1 %d") % n).str()).wait();
+                    fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
+                }
             }
             break;
 
         case Checktype::QUARTERSORT:
-            fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
-            if (!fp) {
-                boost::process::child(path.string() + (boost::format(" 2 %d") % n).str()).wait();
-                fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen((boost::format("sortdata_%d_quartersort.dat") % n).str().c_str(), "rb"), std::fclose);
+            {
+                auto const filename = (boost::format("sortdata_%d_quartersort.dat") % n).str();
+                fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
+                if (!fp) {
+                    boost::process::child(path.string() + (boost::format(" 2 %d") % n).str()).wait();
+                    fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
+                }
             }
             break;
 
