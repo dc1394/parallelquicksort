@@ -28,7 +28,7 @@
 #include <vector>                       // for std::vector
 
 #include <pstl/algorithm>
-#include <pstl/execution>               // for pstl::execution::par
+#include <pstl/execution>               // for pstl::execution
 
 #include <boost/assert.hpp>             // for boost::assert
 #include <boost/filesystem.hpp>         // for boost::filesystem
@@ -36,7 +36,7 @@
 #include <boost/process.hpp>            // for boost::process
 #include <boost/thread.hpp>             // for boost::thread
 
-#if defined(__INTEL_COMPILER) || __GNUC__ >= 5
+#if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
     #include <cilk/cilk.h>              // for cilk_spawn, cilk_sync
 #endif
 
@@ -484,14 +484,14 @@ namespace {
         std::array< std::uint8_t, 3 > const bom = { 0xEF, 0xBB, 0xBF };
         ofs.write(reinterpret_cast<const char *>(bom.data()), sizeof(bom));
 
-#if defined(__INTEL_COMPILER) || __GNUC__ >= 5
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallelism TS)\n";
+#if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
 #elif defined(_MSC_VER)
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS) MSVC内蔵,std::sort (Parallelism TS)\n";
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #elif _OPENMP < 200805
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
 #else
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,tbb::parallel_sort,std::sort (Parallelism TS)\n";
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
 #endif
         
         auto issuccess = true;
@@ -538,7 +538,7 @@ namespace {
                     }
 #endif
 
-#if !defined(__INTEL_COMPILER) && __GNUC__ < 5
+#if !defined(__INTEL_COMPILER) && (__GNUC__ < 5 || __GNUC__ == 8)
                     if (i == 5) {
                         continue;
                     }
