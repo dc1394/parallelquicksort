@@ -20,10 +20,6 @@
 #include <stack>                        // for std::stack
 #include <thread>                       // for std::thread
 
-#ifdef __INTEL_COMPILER
-    #include <tuple>                    // for std::tie
-#endif
-
 #include <utility>                      // for std::pair
 #include <vector>                       // for std::vector
 
@@ -123,15 +119,8 @@ namespace {
         // スタックが空になるまで繰り返す
         while (!stack.empty()) {
             // 範囲の情報をスタックから取り出す
-
-#ifdef __INTEL_COMPILER
-            // Intel C++ Compiler 18.0は未だに構造化束縛をサポートしていない
-            RandomIter left, right;
-            std::tie(left, right) = stack.top();
-#else
             // C++17の構造化束縛を使う
             auto [left, right] = stack.top();
-#endif
             stack.pop();
 
             auto i = left;
