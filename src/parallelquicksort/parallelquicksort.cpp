@@ -476,7 +476,7 @@ namespace {
 #if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
 #elif defined(_MSC_VER)
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
+        ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #elif _OPENMP < 200805
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
 #else
@@ -624,7 +624,7 @@ namespace {
             }
         }
 
-        ofs << boost::format(u8"%.10f") % (elapsed_time / static_cast<double>(CHECKLOOP)) << ',';
+        ofs << boost::format("%.10f") % (elapsed_time / static_cast<double>(CHECKLOOP)) << ',';
 
         return vec;
     }
