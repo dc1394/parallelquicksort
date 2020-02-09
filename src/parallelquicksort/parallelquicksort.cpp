@@ -171,7 +171,7 @@ namespace {
         }
     }
 
-#if defined(__INTEL_COMPILER) || __GNUC__ >= 5
+#if defined(__INTEL_COMPILER) ||  (__GNUC__ >= 5 && __GNUC__ < 8)
     template < class RandomIter >
     //! A template function.
     /*!
@@ -507,7 +507,7 @@ namespace {
 #endif
                 vecar[4] = elapsed_time(checktype, [](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
                 
-#ifdef __INTEL_COMPILER
+#if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
                 vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
 #endif
                 vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
