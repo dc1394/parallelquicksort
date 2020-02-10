@@ -22,10 +22,10 @@ all: $(PROG) $(PROG2) ;
 -include $(DEPS)
 
 $(PROG): $(OBJS)
-		$(CXX) $^ $(LDFLAGS) $(CXXFLAGS) -o $@
+		$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
 
 $(PROG2): $(OBJS2)
-		$(CXX) $^ $(LDFLAGS) $(CXXFLAGS) -o $@
+		$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
 
 %.o: %.cpp
 		$(CXX) $(CXXFLAGS) -c -MMD -MP -DDEBUG $<

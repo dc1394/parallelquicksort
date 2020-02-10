@@ -5,39 +5,39 @@
     This software is released under the BSD 2-Clause License.
 */
 
-#include <algorithm>                    // for std::partition, std::sort
-#include <array>                        // for std::array
-#include <chrono>                       // for std::chrono
-#include <cstdint>                      // for std::int32_t
-#include <cstdio>                       // for std::fclose, std::fopen, std::fread, std::rewind
+#include <algorithm>                // for std::partition, std::sort
+#include <array>                    // for std::array
+#include <chrono>                   // for std::chrono
+#include <cstdint>                  // for std::int32_t
+#include <cstdio>                   // for std::fclose, std::fopen, std::fread, std::rewind
 #ifndef __clang__
-    #include <execution>                // for std::execution
+    #include <execution>            // for std::execution
 #endif
-#include <fstream>                      // for std::ofstream
-#include <iostream>                     // for std::cerr, std::cout, std::endl
-#include <iterator>                     // for std::distance
-#include <numeric>                      // for std::iota
-#include <stack>                        // for std::stack
-#include <thread>                       // for std::thread
-
-#include <utility>                      // for std::pair
-#include <vector>                       // for std::vector
+#include <fstream>                  // for std::ofstream
+#include <iostream>                 // for std::cerr, std::cout, std::endl
+#include <iterator>                 // for std::distance
+#include <numeric>                  // for std::iota
+#include <stack>                    // for std::stack
+#include <stdexcept>                // for std::runtime_error
+#include <thread>                   // for std::thread
+#include <utility>                  // for std::pair
+#include <vector>                   // for std::vector
 
 #include <pstl/algorithm>
-#include <pstl/execution>               // for pstl::execution
+#include <pstl/execution>            // for pstl::execution
 
-#include <boost/assert.hpp>             // for boost::assert
-#include <boost/filesystem.hpp>         // for boost::filesystem
-#include <boost/format.hpp>             // for boost::format
-#include <boost/process.hpp>            // for boost::process
-#include <boost/thread.hpp>             // for boost::thread
+#include <boost/assert.hpp>         // for boost::assert
+#include <boost/filesystem.hpp>     // for boost::filesystem
+#include <boost/format.hpp>         // for boost::format
+#include <boost/process.hpp>        // for boost::process
+#include <boost/thread.hpp>         // for boost::thread
 
 #if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
-    #include <cilk/cilk.h>              // for cilk_spawn, cilk_sync
+    #include <cilk/cilk.h>          // for cilk_spawn, cilk_sync
 #endif
 
-#include <tbb/parallel_invoke.h>        // for tbb::parallel_invoke
-#include <tbb/parallel_sort.h>          // for tbb::parallel_sort
+#include <tbb/parallel_invoke.h>    // for tbb::parallel_invoke
+#include <tbb/parallel_sort.h>      // for tbb::parallel_sort
 
 namespace {
     //! A enumerated type
@@ -120,7 +120,7 @@ namespace {
         while (!stack.empty()) {
             // 範囲の情報をスタックから取り出す
             // C++17の構造化束縛を使う
-            auto [left, right] = stack.top();
+            auto const [left, right] = stack.top();
             stack.pop();
 
             auto i = left;
@@ -502,24 +502,30 @@ namespace {
 
                 ofs << n << ',';
 
-                vecar[0] = elapsed_time(checktype, [](auto & vec) { std::sort(vec.begin(), vec.end()); }, n, ofs);
-                vecar[1] = elapsed_time(checktype, [](auto & vec) { quick_sort(vec.begin(), vec.end()); }, n, ofs);
-                vecar[2] = elapsed_time(checktype, [](auto & vec) { quick_sort_thread(vec.begin(), vec.end()); }, n, ofs);
+                try {
+                    vecar[0] = elapsed_time(checktype, [](auto & vec) { std::sort(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[1] = elapsed_time(checktype, [](auto & vec) { quick_sort(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[2] = elapsed_time(checktype, [](auto & vec) { quick_sort_thread(vec.begin(), vec.end()); }, n, ofs);
                 
 #if _OPENMP >= 200805
-                vecar[3] = elapsed_time(checktype, [](auto & vec) { quick_sort_openmp(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[3] = elapsed_time(checktype, [](auto & vec) { quick_sort_openmp(vec.begin(), vec.end()); }, n, ofs);
 #endif
-                vecar[4] = elapsed_time(checktype, [](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[4] = elapsed_time(checktype, [](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
                 
 #if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
-                vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
 #endif
-                vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
+                    vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
 
 #ifndef __clang__
-                vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                    vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
-                vecar[8] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                    vecar[8] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                }
+                catch (std::runtime_error const & e) {
+                    std::cerr << e.what() << std::endl;
+                    return false;
+                }
 
                 ofs << std::endl;
 
@@ -531,7 +537,7 @@ namespace {
                     }
 #endif
 
-#if !defined(__INTEL_COMPILER) && (__GNUC__ < 5 || __GNUC__ == 8)
+#if !defined(__INTEL_COMPILER) && (__GNUC__ < 5 || __GNUC__ > 8)
                     if (i == 5) {
                         continue;
                     }
@@ -610,8 +616,11 @@ namespace {
             BOOST_ASSERT(!"switchのdefaultに来てしまった！");
             break;
         }
-                
-        std::fread(vec.data(), sizeof(std::int32_t), vec.size(), fp.get());
+
+        auto const readsize = vec.size();        
+        if (readsize != std::fread(vec.data(), sizeof(std::int32_t), readsize, fp.get())) {
+            throw std::runtime_error("std::freadに失敗");
+        }
 
         auto elapsed_time = 0.0;
         
@@ -624,7 +633,9 @@ namespace {
             
             if (i != CHECKLOOP) {
                 std::rewind(fp.get());
-                std::fread(vec.data(), sizeof(std::int32_t), vec.size(), fp.get());
+                if (readsize != std::fread(vec.data(), sizeof(std::int32_t), readsize, fp.get())) {
+                    throw std::runtime_error("std::freadに失敗");
+                }
             }
         }
 

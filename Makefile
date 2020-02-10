@@ -12,7 +12,7 @@ DEPS2 = makequicksortdata.d
 
 VPATH  = src/parallelquicksort src/makequicksortdata
 CXX = g++
-CXXFLAGS = -Wextra -O3 -mtune=native -march=native -pipe -std=c++17 -fopenmp
+CXXFLAGS = -Wall -Wextra -O3 -mtune=native -march=native -pipe -std=c++17 -fopenmp
 LDFLAGS = -ltbb \
 		  -L/home/dc1394/oss/boost_1_72_0/stage/gcc/lib -lboost_filesystem -lboost_system -lboost_thread
 
@@ -22,10 +22,10 @@ all: $(PROG) $(PROG2) ;
 -include $(DEPS)
 
 $(PROG): $(OBJS)
-		$(CXX) $^ $(LDFLAGS) $(CXXFLAGS) -o $@
+		$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
 
 $(PROG2): $(OBJS2)
-		$(CXX) $^ $(LDFLAGS) $(CXXFLAGS) -o $@
+		$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
 
 %.o: %.cpp
 		$(CXX) $(CXXFLAGS) -c -MMD -MP -DDEBUG $<
