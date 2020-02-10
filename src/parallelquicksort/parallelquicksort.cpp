@@ -1,7 +1,7 @@
 ﻿/*! \file parallelquicksort.cpp
     \brief スレッド並列化したクイックソートのパフォーマンスをチェックする
 
-    Copyright © 2017-2018 @dc1394 All Rights Reserved.
+    Copyright © 2017-2020 @dc1394 All Rights Reserved.
     This software is released under the BSD 2-Clause License.
 */
 
@@ -10,7 +10,7 @@
 #include <chrono>                       // for std::chrono
 #include <cstdint>                      // for std::int32_t
 #include <cstdio>                       // for std::fclose, std::fopen, std::fread, std::rewind
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#ifndef __clang__
     #include <execution>                // for std::execution
 #endif
 #include <fstream>                      // for std::ofstream
@@ -470,17 +470,21 @@ int main()
 namespace {
     bool check_performance(Checktype checktype, std::ofstream & ofs)
     {
+#ifdef _MSC_VER
         std::array< std::uint8_t, 3 > const bom = { 0xEF, 0xBB, 0xBF };
         ofs.write(reinterpret_cast<const char *>(bom.data()), sizeof(bom));
+#endif
 
 #if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,Cilk,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,CilkPlus,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #elif defined(_MSC_VER)
         ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #elif _OPENMP < 200805
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
-#else
+#elif __clang__
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
+#else
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #endif
         
         auto issuccess = true;
@@ -512,7 +516,7 @@ namespace {
 #endif
                 vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
 
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#ifndef __clang__
                 vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
                 vecar[8] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
@@ -537,7 +541,7 @@ namespace {
                         continue;
                     }
 
-                    if (vecar[i].size() != n) {
+                    if (static_cast<std::int32_t>(vecar[i].size()) != n) {
                         issuccess = false;
                         continue;
                     }
