@@ -48,7 +48,7 @@ int main(int argc, char * argv[])
     case Checktype::RANDOM:
     	{
             if (!make_sortdata(Checktype::RANDOM, n)) {
-                std::exit(EXIT_FAILURE);
+                return EXIT_FAILURE;
             }
     	}
     	break;
@@ -56,7 +56,7 @@ int main(int argc, char * argv[])
     case Checktype::SORT:
         {
             if (!make_sortdata(Checktype::SORT, n)) {
-                std::exit(EXIT_FAILURE);
+                return EXIT_FAILURE;
             }
         }
         break;
@@ -64,13 +64,13 @@ int main(int argc, char * argv[])
     case Checktype::QUARTERSORT:
         {
             if (!make_sortdata(Checktype::QUARTERSORT, n)) {
-                std::exit(EXIT_FAILURE);
+                return EXIT_FAILURE;
             }
     	}
         break;
 
     default:
-        BOOST_ASSERT(!"switchのdefaultに来てしまった！");
+        BOOST_ASSERT(!"switch文のdefaultに来てしまった！");
         break;
     }
 

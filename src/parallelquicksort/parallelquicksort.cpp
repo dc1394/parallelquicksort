@@ -24,10 +24,9 @@
 #include <vector>                   // for std::vector
 
 #include <pstl/algorithm>
-#include <pstl/execution>            // for pstl::execution
+#include <pstl/execution>           // for pstl::execution
 
 #include <boost/assert.hpp>         // for boost::assert
-#include <boost/filesystem.hpp>     // for boost::filesystem
 #include <boost/format.hpp>         // for boost::format
 #include <boost/process.hpp>        // for boost::process
 #include <boost/thread.hpp>         // for boost::thread
@@ -470,9 +469,9 @@ int main()
 namespace {
     bool check_performance(Checktype checktype, std::ofstream & ofs)
     {
-#ifdef _MSC_VER
+#ifndef _MSC_VER
         std::array< std::uint8_t, 3 > const bom = { 0xEF, 0xBB, 0xBF };
-        ofs.write(reinterpret_cast<const char *>(bom.data()), sizeof(bom));
+        ofs.write(reinterpret_cast<char const *>(bom.data()), sizeof(bom));
 #endif
 
 #if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
@@ -496,31 +495,30 @@ namespace {
 
                 std::vector<std::int32_t> vec(n);
                 std::iota(vec.begin(), vec.end(), 1);
-                auto const vecback(vec);
 
                 std::array< std::vector<std::int32_t>, 9 > vecar;
 
                 ofs << n << ',';
 
                 try {
-                    vecar[0] = elapsed_time(checktype, [](auto & vec) { std::sort(vec.begin(), vec.end()); }, n, ofs);
-                    vecar[1] = elapsed_time(checktype, [](auto & vec) { quick_sort(vec.begin(), vec.end()); }, n, ofs);
-                    vecar[2] = elapsed_time(checktype, [](auto & vec) { quick_sort_thread(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[0] = elapsed_time(checktype, [](auto && vec) { std::sort(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[1] = elapsed_time(checktype, [](auto && vec) { quick_sort(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[2] = elapsed_time(checktype, [](auto && vec) { quick_sort_thread(vec.begin(), vec.end()); }, n, ofs);
                 
 #if _OPENMP >= 200805
-                    vecar[3] = elapsed_time(checktype, [](auto & vec) { quick_sort_openmp(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[3] = elapsed_time(checktype, [](auto && vec) { quick_sort_openmp(vec.begin(), vec.end()); }, n, ofs);
 #endif
-                    vecar[4] = elapsed_time(checktype, [](auto & vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[4] = elapsed_time(checktype, [](auto && vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
                 
 #if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
-                    vecar[5] = elapsed_time(checktype, [](auto & vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[5] = elapsed_time(checktype, [](auto && vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
 #endif
-                    vecar[6] = elapsed_time(checktype, [](auto & vec) { tbb::parallel_sort(vec); }, n, ofs);
+                    vecar[6] = elapsed_time(checktype, [](auto && vec) { tbb::parallel_sort(vec); }, n, ofs);
 
 #ifndef __clang__
-                    vecar[7] = elapsed_time(checktype, [](auto & vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                    vecar[7] = elapsed_time(checktype, [](auto && vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
-                    vecar[8] = elapsed_time(checktype, [](auto & vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                    vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
                 }
                 catch (std::runtime_error const & e) {
                     std::cerr << e.what() << std::endl;
@@ -552,7 +550,7 @@ namespace {
                         continue;
                     }
 
-                    if (!vec_check(vecback, vecar[i])) {
+                    if (!vec_check(vec, vecar[i])) {
                         std::cerr << "Error! vecar[" << i << ']' << std::endl;
                         issuccess = false;
                     }
@@ -576,7 +574,7 @@ namespace {
         std::vector<std::int32_t> vec(n);
         std::unique_ptr< FILE, decltype(&std::fclose) > fp(nullptr, fclose);
 
-        auto const path = boost::filesystem::current_path() / "makequicksortdata";
+        auto const program_name = "makequicksortdata";
 
         switch (checktype) {
         case Checktype::RANDOM:
@@ -584,7 +582,7 @@ namespace {
                 auto const filename = (boost::format("sortdata_%d_rand.dat") % n).str();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
                 if (!fp) {
-                    boost::process::child(path.string() + (boost::format(" 0 %d") % n).str()).wait();
+                    boost::process::child(program_name + (boost::format(" 0 %d") % n).str()).wait();
                     fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
                 }
             }
@@ -595,7 +593,7 @@ namespace {
                 auto const filename = (boost::format("sortdata_%d_already.dat") % n).str();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
                 if (!fp) {
-                    boost::process::child(path.string() + (boost::format(" 1 %d") % n).str()).wait();
+                    boost::process::child(program_name + (boost::format(" 1 %d") % n).str()).wait();
                     fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
                 }
             }
@@ -606,14 +604,14 @@ namespace {
                 auto const filename = (boost::format("sortdata_%d_quartersort.dat") % n).str();
                 fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
                 if (!fp) {
-                    boost::process::child(path.string() + (boost::format(" 2 %d") % n).str()).wait();
+                    boost::process::child(program_name + (boost::format(" 2 %d") % n).str()).wait();
                     fp = std::unique_ptr< FILE, decltype(&std::fclose) >(std::fopen(filename.c_str(), "rb"), std::fclose);
                 }
             }
             break;
 
         default:
-            BOOST_ASSERT(!"switchのdefaultに来てしまった！");
+            BOOST_ASSERT(!"switch文のdefaultに来てしまった！");
             break;
         }
 
