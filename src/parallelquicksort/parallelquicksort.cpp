@@ -469,9 +469,9 @@ int main()
 namespace {
     bool check_performance(Checktype checktype, std::ofstream & ofs)
     {
-#ifdef _MSC_VER
+#ifndef _MSC_VER
         std::array< std::uint8_t, 3 > const bom = { 0xEF, 0xBB, 0xBF };
-        ofs.write(reinterpret_cast<const char *>(bom.data()), sizeof(bom));
+        ofs.write(reinterpret_cast<char const *>(bom.data()), sizeof(bom));
 #endif
 
 #if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
