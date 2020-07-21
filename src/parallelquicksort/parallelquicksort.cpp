@@ -518,7 +518,7 @@ namespace {
 #ifndef __clang__
                     vecar[7] = elapsed_time(checktype, [](auto && vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
-                    vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                    vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(__pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
                 }
                 catch (std::runtime_error const & e) {
                     std::cerr << e.what() << std::endl;
