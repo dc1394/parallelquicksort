@@ -12,7 +12,7 @@ DEPS2 = makequicksortdata.d
 
 VPATH  = src/parallelquicksort src/makequicksortdata
 CXX = icpc
-CXXFLAGS = -Wall -Wextra -O3 -xHOST -ipo -pipe -std=c++17 -fopenmp
+CXXFLAGS = -Wall -Wextra -O3 -xHOST -ipo -pipe -std=c++17 -qopenmp
 LDFLAGS = -ltbb \
 		  -L/home/dc1394/oss/boost_1_73_0/stage/icc/lib -lboost_system -lboost_thread
 
