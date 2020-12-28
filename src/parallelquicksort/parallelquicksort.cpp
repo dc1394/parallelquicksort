@@ -23,6 +23,8 @@
 #include <utility>                  // for std::pair
 #include <vector>                   // for std::vector
 
+#include <parallel/algorithm>       // for __gnu_parallel::sort
+
 #include <pstl/algorithm>
 #include <pstl/execution>           // for pstl::execution
 
@@ -169,70 +171,6 @@ namespace {
             }
         }
     }
-
-#if defined(__INTEL_COMPILER) ||  (__GNUC__ >= 5 && __GNUC__ < 8)
-    template < class RandomIter >
-    //! A template function.
-    /*!
-        指定された範囲の要素をクイックソートでソートする（Cilkで並列化）
-        \param first 範囲の下限
-        \param last 範囲の上限
-        \param reci 現在の再帰の深さ
-    */
-    void quick_sort_cilk(RandomIter first, RandomIter last, std::int32_t reci)
-    {
-        // 部分ソートの要素数
-        auto const num = std::distance(first, last);
-
-        if (num <= 1) {
-            // 部分ソートの要素数が1個以下なら何もすることはない
-            return;
-        }
-
-        // 再帰の深さ + 1
-        reci++;
-
-        // 部分ソートが小さくなりすぎるとシリアル実行のほうが効率が良くなるため
-        // 部分ソートの要素数が閾値以上の時だけ再帰させる
-        // かつ、現在の再帰の深さが物理コア数以下のときだけ再帰させる
-        if (num >= THRESHOLD && reci <= NUMPHYSICALCORE) {
-            // 交点まで左右から入れ替えして交点を探す
-            auto const middle = std::partition(first + 1, last, [first](auto n) { return n < *first; });
-
-            // 交点 - 1の位置
-            auto const mid = middle - 1;
-
-            // 交点を移動
-            std::iter_swap(first, mid);
-
-            // 下部をソート（別スレッドで実行）
-            cilk_spawn quick_sort_cilk(first, mid, reci);
-
-            // 上部をソート（別スレッドで実行）
-            cilk_spawn quick_sort_cilk(middle, last, reci);
-
-            // 二つのスレッドの終了を待機
-            cilk_sync;
-        }
-        else {
-            // 再帰なしのクイックソートの関数を呼び出す
-            quick_sort(first, last);
-        }
-    }
-
-    template < class RandomIter >
-    //! A template function.
-    /*!
-        指定された範囲の要素をクイックソートでソートする（Cilkで並列化）
-        \param first 範囲の下限
-        \param last 範囲の上限
-    */
-    inline void quick_sort_cilk(RandomIter first, RandomIter last)
-    {
-        // 再帰ありの並列クイックソートの関数を呼び出す
-        quick_sort_cilk(first, last, 0);
-    }
-#endif
 
 #if _OPENMP >= 200805
     template < class RandomIter >
@@ -474,16 +412,12 @@ namespace {
         ofs.write(reinterpret_cast<char const *>(bom.data()), sizeof(bom));
 #endif
 
-#if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,CilkPlus,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS)\n";
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER)
         ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #elif _OPENMP < 200805
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
-#elif __clang__
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
 #else
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS)\n";
+        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,__gnu_parallel::sort,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #endif
         
         auto issuccess = true;
@@ -509,15 +443,15 @@ namespace {
                     vecar[3] = elapsed_time(checktype, [](auto && vec) { quick_sort_openmp(vec.begin(), vec.end()); }, n, ofs);
 #endif
                     vecar[4] = elapsed_time(checktype, [](auto && vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
-                
-#if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
-                    vecar[5] = elapsed_time(checktype, [](auto && vec) { quick_sort_cilk(vec.begin(), vec.end()); }, n, ofs);
+
+#ifndef _MSC_VER
+                    vecar[5] = elapsed_time(checktype, [](auto && vec) { __gnu_parallel::sort(vec.begin(), vec.end()); }, n, ofs);
 #endif
+
                     vecar[6] = elapsed_time(checktype, [](auto && vec) { tbb::parallel_sort(vec); }, n, ofs);
 
-#ifndef __clang__
                     vecar[7] = elapsed_time(checktype, [](auto && vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
-#endif
+
                     vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(__pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
                 }
                 catch (std::runtime_error const & e) {
