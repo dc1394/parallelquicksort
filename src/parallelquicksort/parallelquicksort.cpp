@@ -452,7 +452,12 @@ namespace {
 
                     vecar[7] = elapsed_time(checktype, [](auto && vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 
+#ifndef _MSC_VER
+                    vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(__pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+#else
                     vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+#endif
+
                 }
                 catch (std::runtime_error const & e) {
                     std::cerr << e.what() << std::endl;
