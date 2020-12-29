@@ -10,9 +10,7 @@
 #include <chrono>                   // for std::chrono
 #include <cstdint>                  // for std::int32_t
 #include <cstdio>                   // for std::fclose, std::fopen, std::fread, std::rewind
-#ifndef __clang__
-    #include <execution>            // for std::execution
-#endif
+#include <execution>                // for std::execution
 #include <fstream>                  // for std::ofstream
 #include <iostream>                 // for std::cerr, std::cout, std::endl
 #include <iterator>                 // for std::distance
@@ -23,7 +21,11 @@
 #include <utility>                  // for std::pair
 #include <vector>                   // for std::vector
 
-#include <parallel/algorithm>       // for __gnu_parallel::sort
+#ifndef _MSC_VER
+    #include <parallel/algorithm>   // for __gnu_parallel::sort
+#else
+    #include <ppl.h>
+#endif
 
 #include <pstl/algorithm>
 #include <pstl/execution>           // for pstl::execution
@@ -32,10 +34,6 @@
 #include <boost/format.hpp>         // for boost::format
 #include <boost/process.hpp>        // for boost::process
 #include <boost/thread.hpp>         // for boost::thread
-
-#if defined(__INTEL_COMPILER) || (__GNUC__ >= 5 && __GNUC__ < 8)
-    #include <cilk/cilk.h>          // for cilk_spawn, cilk_sync
-#endif
 
 #include <tbb/parallel_invoke.h>    // for tbb::parallel_invoke
 #include <tbb/parallel_sort.h>      // for tbb::parallel_sort
@@ -413,7 +411,7 @@ namespace {
 #endif
 
 #if defined(_MSC_VER)
-        ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
+        ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,concurrency::parallel_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #elif _OPENMP < 200805
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
 #else
@@ -446,13 +444,15 @@ namespace {
 
 #ifndef _MSC_VER
                     vecar[5] = elapsed_time(checktype, [](auto && vec) { __gnu_parallel::sort(vec.begin(), vec.end()); }, n, ofs);
+#else
+                    vecar[5] = elapsed_time(checktype, [](auto&& vec) { concurrency::parallel_sort(vec.begin(), vec.end()); }, n, ofs);
 #endif
 
                     vecar[6] = elapsed_time(checktype, [](auto && vec) { tbb::parallel_sort(vec); }, n, ofs);
 
                     vecar[7] = elapsed_time(checktype, [](auto && vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 
-                    vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(__pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                    vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
                 }
                 catch (std::runtime_error const & e) {
                     std::cerr << e.what() << std::endl;
