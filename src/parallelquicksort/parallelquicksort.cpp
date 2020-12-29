@@ -411,7 +411,7 @@ namespace {
 #endif
 
 #if defined(_MSC_VER)
-        ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,concurrency::parallel_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
+        ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #elif _OPENMP < 200805
         ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,TBB,tbb::parallel_sort,std::sort (Parallel STLのParallelism TS)\n";
 #else
@@ -428,7 +428,7 @@ namespace {
                 std::vector<std::int32_t> vec(n);
                 std::iota(vec.begin(), vec.end(), 1);
 
-                std::array< std::vector<std::int32_t>, 9 > vecar;
+                std::array< std::vector<std::int32_t>, 10 > vecar;
 
                 ofs << n << ',';
 
@@ -446,16 +446,19 @@ namespace {
                     vecar[5] = elapsed_time(checktype, [](auto && vec) { __gnu_parallel::sort(vec.begin(), vec.end()); }, n, ofs);
 #else
                     vecar[5] = elapsed_time(checktype, [](auto&& vec) { concurrency::parallel_sort(vec.begin(), vec.end()); }, n, ofs);
+
+                    vecar[6] = elapsed_time(checktype, [](auto&& vec) { concurrency::parallel_buffered_sort(vec.begin(), vec.end()); }, n, ofs);
 #endif
 
-                    vecar[6] = elapsed_time(checktype, [](auto && vec) { tbb::parallel_sort(vec); }, n, ofs);
 
-                    vecar[7] = elapsed_time(checktype, [](auto && vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                    vecar[7] = elapsed_time(checktype, [](auto && vec) { tbb::parallel_sort(vec); }, n, ofs);
+
+                    vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 
 #ifndef _MSC_VER
-                    vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(__pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                    vecar[9] = elapsed_time(checktype, [](auto && vec) { std::sort(__pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #else
-                    vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+                    vecar[9] = elapsed_time(checktype, [](auto && vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
 
                 }
