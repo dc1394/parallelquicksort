@@ -262,3 +262,4 @@ __pycache__/
 /src/あらかじめソートされたデータ.csv
 /src/完全にシャッフルされたデータ.csv
 /src/最初の1_4だけソートされたデータ.csv
+/src/parallelquicksort/sortdata_5000000_rand.dat
