@@ -263,3 +263,13 @@ __pycache__/
 /src/完全にシャッフルされたデータ.csv
 /src/最初の1_4だけソートされたデータ.csv
 /src/parallelquicksort/sortdata_5000000_rand.dat
+/src/parallelquicksort/最初の1_4だけソートされたデータ.csv
+/src/parallelquicksort/完全にシャッフルされたデータ.csv
+/src/parallelquicksort/あらかじめソートされたデータ.csv
+/src/parallelquicksort/sortdata_500_rand.dat
+/src/parallelquicksort/sortdata_5000_rand.dat
+/src/parallelquicksort/sortdata_50000_rand.dat
+/src/parallelquicksort/sortdata_500000_rand.dat
+/src/parallelquicksort/sortdata_1000_rand.dat
+/src/parallelquicksort/sortdata_10000_rand.dat
+/src/parallelquicksort/sortdata_100000_rand.dat

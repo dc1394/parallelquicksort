@@ -70,12 +70,6 @@ namespace {
 
     //! A global variable (constant expression).
     /*!
-        計測する回数
-    */
-    static auto constexpr CPPTHREADRECMAX = 7;
-
-    //! A global variable (constant expression).
-    /*!
         ソートする配列の要素数の最初の数
     */
     static auto constexpr N = 500;
@@ -353,7 +347,7 @@ namespace {
 
         // 部分ソートが小さくなりすぎるとシリアル実行のほうが効率が良くなるため
         // 部分ソートの要素数が閾値以上の時だけ再帰させる
-        // かつ、現在の再帰の深さが物理コア数以下のときだけ再帰させる
+        // かつ、現在の再帰の深さがSTDTHREADRECMAX以下のときだけ再帰させる
         if (num >= THRESHOLD && reci <= STDTHREADRECMAX) {
             // 交点まで左右から入れ替えして交点を探す
             auto const middle = std::partition(first + 1, last, [first](auto n) { return n < *first; });
@@ -695,8 +689,10 @@ namespace {
 
 #if defined(_MSC_VER) && _OPENMP < 200805
         ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
-#elif defined(_MSC_VER)
-        ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,OpenMP,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
+#elif defined(_MSC_VER) && defined(__llvm__)
+        using namespace std::string_view_literals;
+        
+        ofs << myutf8tosjis(u8R"(配列の要素数,std::sort,クイックソート,std::thread,TBB,OpenMP,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS))"sv) << '\n';
 #else
         ofs << u8R"(配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,__gnu_parallel::sort,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS))" << '\n';
 #endif
@@ -707,8 +703,6 @@ namespace {
         for (auto i = 0; i < 6; i++) {
             for (auto j = 0; j < 2; j++) {
 #if defined(_MSC_VER) && defined(__llvm__)
-                using namespace std::string_view_literals;
-
                 std::cout << n << myutf8tosjis(u8R"(個を計測中...)"sv) << '\n';
 #else
                 std::cout << n << "個を計測中...\n";
