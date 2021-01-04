@@ -32,7 +32,7 @@
 #ifndef _MSC_VER
     #include <parallel/algorithm>   // for __gnu_parallel::sort
 #else
-    #include <ppl.h>
+    #include <ppl.h>                // for concurrency::parallel_sort, concurrency::parallel_buffered_sort
 #endif
 
 #include <pstl/algorithm>
@@ -85,6 +85,12 @@ namespace {
         実行するCPUの物理コア数
     */
     static std::int32_t const NUMPHYSICALCORE = boost::thread::physical_concurrency();
+
+    //! A global variable (constant expression).
+    /*!
+        クイックソートをstd::threadで並列化する際の再帰数の上限
+    */
+    static auto constexpr STDTHREADRECMAX = 7;
 
     //! A global variable (constant).
     /*!
@@ -348,7 +354,7 @@ namespace {
         // 部分ソートが小さくなりすぎるとシリアル実行のほうが効率が良くなるため
         // 部分ソートの要素数が閾値以上の時だけ再帰させる
         // かつ、現在の再帰の深さが物理コア数以下のときだけ再帰させる
-        if (num >= THRESHOLD && reci <= CPPTHREADRECMAX) {
+        if (num >= THRESHOLD && reci <= STDTHREADRECMAX) {
             // 交点まで左右から入れ替えして交点を探す
             auto const middle = std::partition(first + 1, last, [first](auto n) { return n < *first; });
 
@@ -691,8 +697,8 @@ namespace {
         ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #elif defined(_MSC_VER)
         ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,OpenMP,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
-#elif
-        ofs << u8"配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,__gnu_parallel::sort,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS)\n";
+#else
+        ofs << u8R"(配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,__gnu_parallel::sort,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS))" << '\n';
 #endif
         
         auto issuccess = true;
@@ -737,10 +743,10 @@ namespace {
 
                     vecar[8] = elapsed_time(checktype, [](auto && vec) { std::sort(std::execution::par, vec.begin(), vec.end()); }, n, ofs);
 
-#ifndef _MSC_VER
-                    vecar[9] = elapsed_time(checktype, [](auto && vec) { std::sort(__pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
-#else
+#ifdef _MSC_VER
                     vecar[9] = elapsed_time(checktype, [](auto && vec) { std::sort(pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
+#else
+                    vecar[9] = elapsed_time(checktype, [](auto && vec) { std::sort(__pstl::execution::par, vec.begin(), vec.end()); }, n, ofs);
 #endif
 
                 }
