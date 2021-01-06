@@ -692,7 +692,7 @@ namespace {
 #elif defined(_MSC_VER) && defined(__llvm__)
         using namespace std::string_view_literals;
         
-        ofs << myutf8tosjis(u8R"(配列の要素数,std::sort,クイックソート,std::thread,TBB,OpenMP,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS))"sv) << '\n';
+        ofs << myutf8tosjis(u8R"(配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS))"sv) << '\n';
 #else
         ofs << u8R"(配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,__gnu_parallel::sort,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS))" << '\n';
 #endif
