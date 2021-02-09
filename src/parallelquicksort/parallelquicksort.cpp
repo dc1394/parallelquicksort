@@ -347,7 +347,7 @@ namespace {
 
         // 部分ソートが小さくなりすぎるとシリアル実行のほうが効率が良くなるため
         // 部分ソートの要素数が閾値以上の時だけ再帰させる
-        // かつ、現在の再帰の深さがSTDTHREADRECMAX以下のときだけ再帰させる
+        // かつ、現在の再帰の深さがSTDTHREADRECMAX( = 7)以下のときだけ再帰させる
         if (num >= THRESHOLD && reci <= STDTHREADRECMAX) {
             // 交点まで左右から入れ替えして交点を探す
             auto const middle = std::partition(first + 1, last, [first](auto n) { return n < *first; });
