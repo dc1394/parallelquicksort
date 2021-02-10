@@ -194,6 +194,66 @@ namespace {
         }
     }
 
+    template < class RandomIter >
+    //! A template function.
+    /*!
+        指定された範囲の要素をクイックソートでソートする（oneTBBで並列化）
+        \param first 範囲の下限
+        \param last 範囲の上限
+        \param reci 現在の再帰の深さ
+    */
+    void quick_sort_onetbb(RandomIter first, RandomIter last, std::int32_t reci)
+    {
+        // 部分ソートの要素数
+        auto const num = std::distance(first, last);
+
+        if (num <= 1) {
+            // 部分ソートの要素数が1個以下なら何もすることはない
+            return;
+        }
+
+        // 再帰の深さ + 1
+        reci++;
+
+        // 部分ソートが小さくなりすぎるとシリアル実行のほうが効率が良くなるため
+        // 部分ソートの要素数が閾値以上の時だけ再帰させる
+        // かつ、現在の再帰の深さが物理コア数以下のときだけ再帰させる
+        if (num >= THRESHOLD && reci <= NUMPHYSICALCORE) {
+            // 交点まで左右から入れ替えして交点を探す
+            auto const middle = std::partition(first + 1, last, [first](auto n) { return n < *first; });
+
+            // 交点 - 1の位置
+            auto const mid = middle - 1;
+
+            // 交点を移動
+            std::iter_swap(first, mid);
+
+            // 二つのラムダ式を別スレッドで実行
+            tbb::parallel_invoke(
+                // 下部をソート
+                [first, mid, reci]() { quick_sort_onetbb(first, mid, reci); },
+                // 上部をソート
+                [middle, last, reci]() { quick_sort_onetbb(middle, last, reci); });
+        }
+        else {
+            // 再帰なしのクイックソートの関数を呼び出す
+            quick_sort(first, last);
+        }
+    }
+
+    template < class RandomIter >
+    //! A template function.
+    /*!
+        指定された範囲の要素をクイックソートでソートする（oneTBBで並列化）
+        \param first 範囲の下限
+        \param last 範囲の上限
+    */
+    inline void quick_sort_onetbb(RandomIter first, RandomIter last)
+    {
+        // 再帰ありの並列クイックソートの関数を呼び出す
+        quick_sort_onetbb(first, last, 0);
+    }
+
 #if _OPENMP >= 200805
     template < class RandomIter >
     //! A template function.
@@ -263,66 +323,6 @@ namespace {
         quick_sort_openmp(first, last, 0);
     }
 #endif
-
-    template < class RandomIter >
-    //! A template function.
-    /*!
-        指定された範囲の要素をクイックソートでソートする（TBBで並列化）
-        \param first 範囲の下限
-        \param last 範囲の上限
-        \param reci 現在の再帰の深さ
-    */
-    void quick_sort_tbb(RandomIter first, RandomIter last, std::int32_t reci)
-    {
-        // 部分ソートの要素数
-        auto const num = std::distance(first, last);
-
-        if (num <= 1) {
-            // 部分ソートの要素数が1個以下なら何もすることはない
-            return;
-        }
-
-        // 再帰の深さ + 1
-        reci++;
-
-        // 部分ソートが小さくなりすぎるとシリアル実行のほうが効率が良くなるため
-        // 部分ソートの要素数が閾値以上の時だけ再帰させる
-        // かつ、現在の再帰の深さが物理コア数以下のときだけ再帰させる
-        if (num >= THRESHOLD && reci <= NUMPHYSICALCORE) {
-            // 交点まで左右から入れ替えして交点を探す
-            auto const middle = std::partition(first + 1, last, [first](auto n) { return n < *first; });
-
-            // 交点 - 1の位置
-            auto const mid = middle - 1;
-
-            // 交点を移動
-            std::iter_swap(first, mid);
-
-            // 二つのラムダ式を別スレッドで実行
-            tbb::parallel_invoke(
-                // 下部をソート
-                [first, mid, reci]() { quick_sort_tbb(first, mid, reci); },
-                // 上部をソート
-                [middle, last, reci]() { quick_sort_tbb(middle, last, reci); });
-        }
-        else {
-            // 再帰なしのクイックソートの関数を呼び出す
-            quick_sort(first, last);
-        }
-    }
-
-    template < class RandomIter >
-    //! A template function.
-    /*!
-        指定された範囲の要素をクイックソートでソートする（TBBで並列化）
-        \param first 範囲の下限
-        \param last 範囲の上限
-    */
-    inline void quick_sort_tbb(RandomIter first, RandomIter last)
-    {
-        // 再帰ありの並列クイックソートの関数を呼び出す
-        quick_sort_tbb(first, last, 0);
-    }
 
     template < class RandomIter >
     //! A template function.
@@ -479,7 +479,7 @@ namespace {
     template < class RandomIter >
     //! A template function.
     /*!
-        指定された範囲の要素をクイックソートでソートする（TBBで並列化）
+        指定された範囲の要素をクイックソートでソートする（oneTBBで並列化）
         \param first 範囲の下限
         \param last 範囲の上限
         \param reci 現在の再帰の深さ
@@ -527,7 +527,7 @@ namespace {
     template < class RandomIter >
     //! A template function.
     /*!
-        指定された範囲の要素をクイックソートでソートする（TBBで並列化）
+        指定された範囲の要素をクイックソートでソートする（oneTBBで並列化）
         \param first 範囲の下限
         \param last 範囲の上限
         \param recul 再帰数の上限
@@ -688,13 +688,13 @@ namespace {
 #endif
 
 #if defined(_MSC_VER) && _OPENMP < 200805
-        ofs << "配列の要素数,std::sort,クイックソート,std::thread,TBB,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
+        ofs << "配列の要素数,std::sort,クイックソート,std::thread,oneTBB,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #elif defined(_MSC_VER) && defined(__llvm__)
         using namespace std::string_view_literals;
         
-        ofs << myutf8tosjis(u8R"(配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS))"sv) << '\n';
+        ofs << myutf8tosjis(u8R"(配列の要素数,std::sort,クイックソート,std::thread,OpenMP,oneTBB,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS))"sv) << '\n';
 #else
-        ofs << u8R"(配列の要素数,std::sort,クイックソート,std::thread,OpenMP,TBB,__gnu_parallel::sort,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS))" << '\n';
+        ofs << u8R"(配列の要素数,std::sort,クイックソート,std::thread,OpenMP,oneTBB,__gnu_parallel::sort,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS))" << '\n';
 #endif
         
         auto issuccess = true;
@@ -722,7 +722,7 @@ namespace {
 #if _OPENMP >= 200805
                     vecar[3] = elapsed_time(checktype, [](auto && vec) { quick_sort_openmp(vec.begin(), vec.end()); }, n, ofs);
 #endif
-                    vecar[4] = elapsed_time(checktype, [](auto && vec) { quick_sort_tbb(vec.begin(), vec.end()); }, n, ofs);
+                    vecar[4] = elapsed_time(checktype, [](auto && vec) { quick_sort_onetbb(vec.begin(), vec.end()); }, n, ofs);
 
 #ifndef _MSC_VER
                     vecar[5] = elapsed_time(checktype, [](auto && vec) { __gnu_parallel::sort(vec.begin(), vec.end()); }, n, ofs);
@@ -866,9 +866,9 @@ namespace {
         using namespace std::string_view_literals;
 
 #if _OPENMP < 200805
-        ofs << "再帰数,std::thread,TBB\n";
+        ofs << "再帰数,std::thread,oneTBB\n";
 #else
-        ofs << myutf8tosjis(u8R"(再帰数,std::thread,OpenMP,TBB)"sv) << '\n';
+        ofs << myutf8tosjis(u8R"(再帰数,std::thread,OpenMP,oneTBB)"sv) << '\n';
 #endif
 
         for (auto recul = 0U; recul <= boost::thread::hardware_concurrency(); recul++) {
