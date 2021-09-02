@@ -682,6 +682,10 @@ int main()
 namespace {
     bool check_performance(Checktype checktype, std::ofstream & ofs)
     {
+#if defined(_MSC_VER) && defined(__llvm__)
+        using namespace std::string_view_literals;
+#endif
+
 #ifndef _MSC_VER
         std::array< std::uint8_t, 3 > const bom = { 0xEF, 0xBB, 0xBF };
         ofs.write(reinterpret_cast<char const *>(bom.data()), sizeof(bom));
@@ -690,8 +694,6 @@ namespace {
 #if defined(_MSC_VER) && _OPENMP < 200805
         ofs << "配列の要素数,std::sort,クイックソート,std::thread,oneTBB,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS)\n";
 #elif defined(_MSC_VER) && defined(__llvm__)
-        using namespace std::string_view_literals;
-        
         ofs << myutf8tosjis(u8R"(配列の要素数,std::sort,クイックソート,std::thread,OpenMP,oneTBB,concurrency::parallel_sort,concurrency::parallel_buffered_sort,tbb::parallel_sort,std::sort (MSVC内蔵のParallelism TS),std::sort (Parallel STLのParallelism TS))"sv) << '\n';
 #else
         ofs << u8R"(配列の要素数,std::sort,クイックソート,std::thread,OpenMP,oneTBB,__gnu_parallel::sort,tbb::parallel_sort,std::sort (Parallelism TS),std::sort (Parallel STLのParallelism TS))" << '\n';
@@ -863,7 +865,9 @@ namespace {
 #ifdef DEBUG_CHECK_RECUL
     void check_performance_recul(std::ofstream& ofs)
     {
+#if defined(_MSC_VER) && defined(__llvm__)
         using namespace std::string_view_literals;
+#endif
 
 #if _OPENMP < 200805
         ofs << "再帰数,std::thread,oneTBB\n";
