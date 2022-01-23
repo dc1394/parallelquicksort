@@ -38,7 +38,6 @@
 #include <pstl/algorithm>
 #include <pstl/execution>           // for pstl::execution
 
-#include <boost/assert.hpp>         // for boost::assert
 #include <boost/format.hpp>         // for boost::format
 #include <boost/process.hpp>        // for boost::process
 #include <boost/thread.hpp>         // for boost::thread
